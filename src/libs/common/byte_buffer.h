@@ -312,7 +312,8 @@ namespace P2pClouds {
             if(sizeof(T) > length())
                 throw ByteBuffer::Exception(false, pos, sizeof(T), length());
 
-            T val = *((T const*)&data_[pos]);
+            T val;
+            memcpy((void*)&val, &data_[pos], sizeof(T));
             EndianConvert(val);
             return val;
         }

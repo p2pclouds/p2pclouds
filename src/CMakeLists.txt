@@ -63,6 +63,8 @@ add_subdirectory(libs/app)
 add_subdirectory(libs/network)
 add_subdirectory(libs/common)
 add_subdirectory(libs/log)
+add_subdirectory(libs/kademlia)
+add_subdirectory(libs/blockchain)
 
 add_subdirectory(apps/p2pclouds)
 add_subdirectory(apps/test)
