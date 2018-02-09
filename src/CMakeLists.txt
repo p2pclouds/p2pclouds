@@ -58,6 +58,7 @@ ADD_DEFINITIONS(-DLOG_TO_CONSOLE) # log required
 add_subdirectory(deps/gflags-2.2.0)
 add_subdirectory(deps/kcp)
 add_subdirectory(deps/asio-1.10.8)
+add_subdirectory(deps/openssl)
 
 add_subdirectory(libs/app)
 add_subdirectory(libs/network)

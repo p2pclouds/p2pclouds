@@ -15,6 +15,7 @@ target_link_libraries(testapp common)
 target_link_libraries(testapp asio)
 target_link_libraries(testapp kcp)
 target_link_libraries(testapp gflags)
+target_link_libraries(testapp libopenssl)
 
 IF(UNIX)
 target_link_libraries(testapp pthread)

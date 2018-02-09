@@ -15,6 +15,7 @@ target_link_libraries(p2pclouds common)
 target_link_libraries(p2pclouds asio)
 target_link_libraries(p2pclouds kcp)
 target_link_libraries(p2pclouds gflags)
+target_link_libraries(p2pclouds libopenssl)
 
 IF(UNIX)
 target_link_libraries(p2pclouds pthread)
