@@ -26,7 +26,7 @@ namespace P2pClouds {
 		pBlock->timestamp((uint32)(getTimeStamp() & 0xfffffffful));
 		pBlock->proof(proof);
 		pBlock->transactions(currentTransactions_);
-		pBlock->previousHash(previousHash.size() ? previousHash : hashBlock(lastBlock()));
+		pBlock->previousHash(previousHash.size() ? previousHash : lastBlock()->getHash());
 
 		currentTransactions_.clear();
 		chain_.push_back(pBlock);
@@ -47,10 +47,5 @@ namespace P2pClouds {
 	BlockPtr Blockchain::lastBlock() 
 	{
 		return chain_.back();
-	}
-
-	std::string Blockchain::hashBlock(BlockPtr block)
-	{
-
 	}
 }

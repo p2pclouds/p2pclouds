@@ -34,6 +34,8 @@ namespace P2pClouds {
 			return amount_;
 		}
 
+		std::string getHash() const;
+
 	protected:
 		std::string sender_;
 		std::string recipient_;

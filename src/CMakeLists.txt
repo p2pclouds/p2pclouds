@@ -60,6 +60,10 @@ add_subdirectory(deps/kcp)
 add_subdirectory(deps/asio-1.10.8)
 add_subdirectory(deps/openssl)
 
+INCLUDE_DIRECTORIES(
+  ${OPENSSL_INCLUDES}
+)
+
 add_subdirectory(libs/app)
 add_subdirectory(libs/network)
 add_subdirectory(libs/common)

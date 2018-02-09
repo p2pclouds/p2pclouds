@@ -52,6 +52,8 @@ namespace P2pClouds {
 			return previousHash_;
 		}
 
+		std::string getHash() const;
+
 	protected:
 		uint32 index_;
 		uint32 timestamp_;
