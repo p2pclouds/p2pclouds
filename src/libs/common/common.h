@@ -70,6 +70,7 @@
 
 #include "common/version.h"
 #include "common/singleton.h"
+#include "common/uint256.h"
 #include "utf8.h"
 #include <gflags/gflags.h>
 #include <asio.hpp>
@@ -157,6 +158,8 @@ namespace P2pClouds {
 	typedef char											    	TCHAR;
 #endif
 #endif
+
+	typedef uint256													uint256_t;
 
     // Common buff size, such as: path、name、IP
     #define MAX_BUF													256

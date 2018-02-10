@@ -2,6 +2,7 @@
 #include "network/session.h"
 #include "network/network_interface.h"
 #include "log/log.h"
+#include "blockchain/blockchain.h"
 
 namespace P2pClouds {
 
@@ -38,6 +39,10 @@ namespace P2pClouds {
 
 	bool TestApp::run()
 	{
+		Blockchain b;
+		uint256_t hash = b.lastBlock()->getHash();
+		std::string xxx = hash.toString();
+		printf("-blockhash---%s\n", xxx.c_str());
 		return App::run();
 	}
 

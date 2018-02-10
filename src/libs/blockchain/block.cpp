@@ -19,12 +19,15 @@ namespace P2pClouds {
 	{
 	}
 
-	std::string Block::getHash() const
+	uint256_t Block::getHash() const
 	{
-		std::vector<std::uint8_t> hash(SHA256_DIGEST_LENGTH);
+		uint256_t hash;
+
 		ByteBuffer stream;
 
-		stream << index_ << timestamp_ << proof_ << previousHash_;
+		stream << index_ << timestamp_ << proof_;
+		
+		previousHash_.serialize(stream);
 
 		for (auto& item : transactions_)
 			stream << item->getHash();
@@ -32,8 +35,8 @@ namespace P2pClouds {
 		SHA256_CTX sha256;
 		SHA256_Init(&sha256);
 		SHA256_Update(&sha256, stream.data(), stream.length());
-		SHA256_Final(hash.data(), &sha256);
+		SHA256_Final((unsigned char*)&hash, &sha256);
 
-		return "";
+		return hash;
 	}
 }

@@ -15,10 +15,10 @@ namespace P2pClouds {
 
 	void Blockchain::createGenesisBlock()
 	{
-		createNewBlock(100, "1");
+		createNewBlock(100, uint256S("1"));
 	}
 
-	BlockPtr Blockchain::createNewBlock(uint32_t proof, const std::string& previousHash)
+	BlockPtr Blockchain::createNewBlock(uint32_t proof, const uint256_t& previousHash)
 	{
 		BlockPtr pBlock = std::make_shared<Block>();
 

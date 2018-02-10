@@ -44,22 +44,22 @@ namespace P2pClouds {
 			return proof_;
 		}
 
-		void previousHash(std::string val) {
+		void previousHash(const uint256_t& val) {
 			previousHash_ = val;
 		}
 
-		std::string previousHash() const {
+		uint256_t previousHash() const {
 			return previousHash_;
 		}
 
-		std::string getHash() const;
+		uint256_t getHash() const;
 
 	protected:
 		uint32_t index_;
 		uint32_t timestamp_;
 		std::list< TransactionPtr > transactions_;
 		uint32_t proof_;
-		std::string previousHash_;
+		uint256_t previousHash_;
 	};
 
 	typedef std::shared_ptr<Block> BlockPtr;
