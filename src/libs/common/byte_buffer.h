@@ -527,7 +527,7 @@ namespace P2pClouds {
     template <typename T>
     inline ByteBuffer &operator<<(ByteBuffer &b, std::vector<T> v)
     {
-        uint32 vsize = v.size();
+        uint32_t vsize = v.size();
         b << vsize;
 
         for (typename std::vector<T>::iterator i = v.begin(); i != v.end(); ++i)
@@ -541,7 +541,7 @@ namespace P2pClouds {
     template <typename T>
     inline ByteBuffer &operator>>(ByteBuffer &b, std::vector<T> &v)
     {
-        uint32 vsize;
+        uint32_t vsize;
         b >> vsize;
         v.clear();
 
@@ -558,7 +558,7 @@ namespace P2pClouds {
     template <typename T>
     inline ByteBuffer &operator<<(ByteBuffer &b, std::list<T> v)
     {
-		uint32 vsize = v.size();
+		uint32_t vsize = v.size();
         b << vsize;
 
         for (typename std::list<T>::iterator i = v.begin(); i != v.end(); ++i)
@@ -572,7 +572,7 @@ namespace P2pClouds {
     template <typename T>
     inline ByteBuffer &operator>>(ByteBuffer &b, std::list<T> &v)
     {
-		uint32 vsize;
+		uint32_t vsize;
         b >> vsize;
         v.clear();
 
@@ -589,7 +589,7 @@ namespace P2pClouds {
     template <typename K, typename V>
     inline ByteBuffer &operator<<(ByteBuffer &b, std::map<K, V> &m)
     {
-		uint32 vsize = m.size();
+		uint32_t vsize = m.size();
         b << vsize;
 
         for (typename std::map<K, V>::iterator i = m.begin(); i != m.end(); ++i)
@@ -603,7 +603,7 @@ namespace P2pClouds {
     template <typename K, typename V>
     inline ByteBuffer &operator>>(ByteBuffer &b, std::map<K, V> &m)
     {
-        uint32 msize;
+        uint32_t msize;
         b >> msize;
         m.clear();
 
