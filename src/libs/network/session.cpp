@@ -39,7 +39,7 @@ namespace P2pClouds {
 	}
 
 	std::shared_ptr<Session> Session::create(NetworkInterface& networkInterface,
-		uint32 sessionID, const asio::ip::udp::endpoint& remoteEndpoint)
+		uint32_t sessionID, const asio::ip::udp::endpoint& remoteEndpoint)
 	{
 		std::shared_ptr<Session> ptr = std::make_shared<Session>(sessionID, networkInterface, remoteEndpoint);
 
@@ -56,7 +56,7 @@ namespace P2pClouds {
 
 	SessionID Session::createNewSessionID(SessionID arrayIndex)
 	{
-		assert((std::is_same<SessionID, uint32>::value));
+		assert((std::is_same<SessionID, uint32_t>::value));
 
 		SessionID sessionID = 0;
 

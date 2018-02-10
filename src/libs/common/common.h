@@ -158,45 +158,6 @@ namespace P2pClouds {
 #endif
 #endif
 
-	typedef unsigned char											uchar;
-	typedef unsigned short											ushort;
-	typedef unsigned int											uint;
-	typedef unsigned long											ulong;
-
-    #define charptr													char*
-    #define const_charptr											const char*
-
-#if P2PCLOUDS_COMPILER != COMPILER_GNU
-	typedef signed __int64											int64;
-	typedef signed __int32											int32;
-	typedef signed __int16											int16;
-	typedef signed __int8											int8;
-	typedef unsigned __int64										uint64;
-	typedef unsigned __int32										uint32;
-	typedef unsigned __int16										uint16;
-	typedef unsigned __int8											uint8;
-	typedef INT_PTR													intptr;
-	typedef UINT_PTR        										uintptr;
-#else
-	typedef int64_t													int64;
-	typedef int32_t													int32;
-	typedef int16_t													int16;
-	typedef int8_t													int8;
-	typedef uint64_t												uint64;
-	typedef uint32_t												uint32;
-	typedef uint16_t												uint16;
-	typedef uint8_t													uint8;
-	typedef uint16_t												WORD;
-	typedef uint32_t												DWORD;
-#ifdef _LP64
-	typedef int64													intptr;
-	typedef uint64													uintptr;
-#else
-	typedef int32													intptr;
-	typedef uint32													uintptr;
-#endif
-#endif
-
     // Common buff size, such as: path、name、IP
     #define MAX_BUF													256
 
@@ -388,10 +349,10 @@ namespace P2pClouds {
 	template<typename T> void EndianConvert(T*);         // will generate link error
 	template<typename T> void EndianConvertReverse(T*);  // will generate link error
 
-	inline void EndianConvert(uint8&) { }
-	inline void EndianConvert(int8&) { }
-	inline void EndianConvertReverse(uint8&) { }
-	inline void EndianConvertReverse(int8&) { }
+	inline void EndianConvert(uint8_t&) { }
+	inline void EndianConvert(int8_t&) { }
+	inline void EndianConvertReverse(uint8_t&) { }
+	inline void EndianConvertReverse(int8_t&) { }
 
 #if P2PCLOUDS_PLATFORM == PLATFORM_WIN32
 	inline void setenv(const std::string& name, const std::string& value, int overwrite)
@@ -440,7 +401,7 @@ namespace P2pClouds {
 		return ccattr;
 	};
 
-	inline uint64 uuid()
+	inline uint64_t uuid()
 	{
 		static int workid = 1;
 		static int seqid = 0;

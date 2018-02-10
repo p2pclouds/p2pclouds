@@ -11,7 +11,7 @@ namespace P2pClouds {
 
 	#define LISTEN_PORT 27776
 
-	typedef uint32 SessionID;
+	typedef uint32_t SessionID;
 
     enum NetEventType
     {

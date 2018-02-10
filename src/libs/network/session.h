@@ -15,7 +15,7 @@ namespace P2pClouds {
 		virtual ~Session();
 
 		static std::shared_ptr<Session> create(NetworkInterface& networkInterface,
-			uint32 sessionID, const asio::ip::udp::endpoint& remoteEndpoint);
+			uint32_t sessionID, const asio::ip::udp::endpoint& remoteEndpoint);
 
 		// Creating ID by the index of an array
 		static SessionID createNewSessionID(SessionID arrayIndex);
@@ -56,7 +56,7 @@ namespace P2pClouds {
 		asio::ip::udp::endpoint remoteEndpoint_;
 		SessionID id_;
 		ikcpcb* pKCP_;
-		uint64 lastRecvTime_;
+		uint64_t lastRecvTime_;
 	};
 
 }

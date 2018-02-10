@@ -12,19 +12,19 @@ namespace P2pClouds {
 		Block();
 		virtual ~Block();
 
-		void index(uint32 val) {
+		void index(uint32_t val) {
 			index_ = val;
 		}
 
-		uint32 index() const {
+		uint32_t index() const {
 			return index_;
 		}
 
-		void timestamp(uint32 val) {
+		void timestamp(uint32_t val) {
 			timestamp_ = val;
 		}
 
-		uint32 timestamp() const {
+		uint32_t timestamp() const {
 			return timestamp_;
 		}
 
@@ -36,11 +36,11 @@ namespace P2pClouds {
 			return transactions_;
 		}
 
-		void proof(uint32 val) {
+		void proof(uint32_t val) {
 			proof_ = val;
 		}
 
-		uint32 proof() const {
+		uint32_t proof() const {
 			return proof_;
 		}
 
@@ -55,10 +55,10 @@ namespace P2pClouds {
 		std::string getHash() const;
 
 	protected:
-		uint32 index_;
-		uint32 timestamp_;
+		uint32_t index_;
+		uint32_t timestamp_;
 		std::list< TransactionPtr > transactions_;
-		uint32 proof_;
+		uint32_t proof_;
 		std::string previousHash_;
 	};
 

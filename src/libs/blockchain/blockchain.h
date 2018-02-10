@@ -15,8 +15,8 @@ namespace P2pClouds {
 
 		void createGenesisBlock();
 
-		BlockPtr createNewBlock(uint32 proof, const std::string& previousHash);
-		uint32 createNewTransaction(const std::string& sender, const std::string& recipient, uint32 amount);
+		BlockPtr createNewBlock(uint32_t proof, const std::string& previousHash);
+		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
 

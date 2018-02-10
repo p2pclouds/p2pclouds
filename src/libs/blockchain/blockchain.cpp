@@ -18,12 +18,12 @@ namespace P2pClouds {
 		createNewBlock(100, "1");
 	}
 
-	BlockPtr Blockchain::createNewBlock(uint32 proof, const std::string& previousHash)
+	BlockPtr Blockchain::createNewBlock(uint32_t proof, const std::string& previousHash)
 	{
 		BlockPtr pBlock = std::make_shared<Block>();
 
-		pBlock->index((uint32)chain().size() + 1);
-		pBlock->timestamp((uint32)(getTimeStamp() & 0xfffffffful));
+		pBlock->index((uint32_t)chain().size() + 1);
+		pBlock->timestamp((uint32_t)(getTimeStamp() & 0xfffffffful));
 		pBlock->proof(proof);
 		pBlock->transactions(currentTransactions_);
 		pBlock->previousHash(previousHash.size() ? previousHash : lastBlock()->getHash());
@@ -33,7 +33,7 @@ namespace P2pClouds {
 		return pBlock;
 	}
 
-	uint32 Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32 amount)
+	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount)
 	{
 		TransactionPtr pTransaction = std::make_shared<Transaction>();
 		pTransaction->amount(amount);

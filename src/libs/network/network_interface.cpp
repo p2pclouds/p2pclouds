@@ -131,7 +131,7 @@ namespace P2pClouds {
 
 			assert(bytes_recvd < buffer_.size());
 			buffer_.rpos(0);
-			buffer_.wpos(bytes_recvd);
+			buffer_.wpos((int)bytes_recvd);
 
 			if (ConnectPacket::isConnectPacket(buffer_))
 			{

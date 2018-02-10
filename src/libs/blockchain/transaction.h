@@ -26,11 +26,11 @@ namespace P2pClouds {
 			return recipient_;
 		}
 
-		void amount(uint32 val) {
+		void amount(uint32_t val) {
 			amount_ = val;
 		}
 
-		uint32 amount() const {
+		uint32_t amount() const {
 			return amount_;
 		}
 
@@ -39,7 +39,7 @@ namespace P2pClouds {
 	protected:
 		std::string sender_;
 		std::string recipient_;
-		uint32 amount_;
+		uint32_t amount_;
 	};
 
 	typedef std::shared_ptr<Transaction> TransactionPtr;

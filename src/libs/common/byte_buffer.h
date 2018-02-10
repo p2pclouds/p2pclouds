@@ -67,13 +67,13 @@ namespace P2pClouds {
         template <typename T> void append(T value)
         {
             EndianConvert(value);
-            append((uint8 *)&value, sizeof(value));
+            append((uint8_t *)&value, sizeof(value));
         }
 
         template <typename T> void put(size_t pos,T value)
         {
             EndianConvert(value);
-            put(pos,(uint8 *)&value,sizeof(value));
+            put(pos,(uint8_t *)&value,sizeof(value));
         }
         
         void swap(ByteBuffer & s)
@@ -86,51 +86,51 @@ namespace P2pClouds {
             wpos_ = wpos;
         }
 
-        ByteBuffer &operator<<(uint8 value)
+        ByteBuffer &operator<<(uint8_t value)
         {
-            append<uint8>(value);
+            append<uint8_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(uint16 value)
+        ByteBuffer &operator<<(uint16_t value)
         {
-            append<uint16>(value);
+            append<uint16_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(uint32 value)
+        ByteBuffer &operator<<(uint32_t value)
         {
-            append<uint32>(value);
+            append<uint32_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(uint64 value)
+        ByteBuffer &operator<<(uint64_t value)
         {
-            append<uint64>(value);
+            append<uint64_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(int8 value)
+        ByteBuffer &operator<<(int8_t value)
         {
-            append<int8>(value);
+            append<int8_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(int16 value)
+        ByteBuffer &operator<<(int16_t value)
         {
-            append<int16>(value);
+            append<int16_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(int32 value)
+        ByteBuffer &operator<<(int32_t value)
         {
-            append<int32>(value);
+            append<int32_t>(value);
             return *this;
         }
 
-        ByteBuffer &operator<<(int64 value)
+        ByteBuffer &operator<<(int64_t value)
         {
-            append<int64>(value);
+            append<int64_t>(value);
             return *this;
         }
 
@@ -148,21 +148,21 @@ namespace P2pClouds {
 
         ByteBuffer &operator<<(const std::string &value)
         {
-            append((uint8 const *)value.c_str(), value.length());
-            append((uint8)0);
+            append((uint8_t const *)value.c_str(), value.length());
+            append((uint8_t)0);
             return *this;
         }
 
         ByteBuffer &operator<<(const char *str)
         {
-            append((uint8 const *)str, str ? strlen(str) : 0);
-            append((uint8)0);
+            append((uint8_t const *)str, str ? strlen(str) : 0);
+            append((uint8_t)0);
             return *this;
         }
 
         ByteBuffer &operator<<(bool value)
         {
-            append<int8>(value);
+            append<int8_t>(value);
             return *this;
         }
 
@@ -172,51 +172,51 @@ namespace P2pClouds {
             return *this;
         }
 
-        ByteBuffer &operator>>(uint8 &value)
+        ByteBuffer &operator>>(uint8_t &value)
         {
-            value = read<uint8>();
+            value = read<uint8_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(uint16 &value)
+        ByteBuffer &operator>>(uint16_t &value)
         {
-            value = read<uint16>();
+            value = read<uint16_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(uint32 &value)
+        ByteBuffer &operator>>(uint32_t &value)
         {
-            value = read<uint32>();
+            value = read<uint32_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(uint64 &value)
+        ByteBuffer &operator>>(uint64_t &value)
         {
-            value = read<uint64>();
+            value = read<uint64_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(int8 &value)
+        ByteBuffer &operator>>(int8_t &value)
         {
-            value = read<int8>();
+            value = read<int8_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(int16 &value)
+        ByteBuffer &operator>>(int16_t &value)
         {
-            value = read<int16>();
+            value = read<int16_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(int32 &value)
+        ByteBuffer &operator>>(int32_t &value)
         {
-            value = read<int32>();
+            value = read<int32_t>();
             return *this;
         }
 
-        ByteBuffer &operator>>(int64 &value)
+        ByteBuffer &operator>>(int64_t &value)
         {
-            value = read<int64>();
+            value = read<int64_t>();
             return *this;
         }
 
@@ -262,9 +262,9 @@ namespace P2pClouds {
             return *this;
         }
 
-        uint8 operator[](size_t pos) const
+        uint8_t operator[](size_t pos) const
         {
-            return read<uint8>(pos);
+            return read<uint8_t>(pos);
         }
 
         size_t rpos() const { return rpos_; }
@@ -318,7 +318,7 @@ namespace P2pClouds {
             return val;
         }
 
-        void read(uint8 *dest, size_t len)
+        void read(uint8_t *dest, size_t len)
         {
             if(len > length())
             throw ByteBuffer::Exception(false, rpos_, len, length());
@@ -327,8 +327,8 @@ namespace P2pClouds {
             rpos_ += len;
         }
 
-        uint8 *data() { return &data_[0]; }
-        const uint8 *data() const { return &data_[0]; }
+        uint8_t *data() { return &data_[0]; }
+        const uint8_t *data() const { return &data_[0]; }
         
         size_t size() const { return data_.size(); }
         bool empty() const { return data_.empty(); }
@@ -361,20 +361,20 @@ namespace P2pClouds {
 
         void append(const std::string& str)
         {
-            append((uint8 const*)str.c_str(), str.size() + 1);
+            append((uint8_t const*)str.c_str(), str.size() + 1);
         }
 
         void append(const char *src, size_t cnt)
         {
-            return append((const uint8 *)src, cnt);
+            return append((const uint8_t *)src, cnt);
         }
 
         template<class T> void append(const T *src, size_t cnt)
         {
-            return append((const uint8 *)src, cnt * sizeof(T));
+            return append((const uint8_t *)src, cnt * sizeof(T));
         }
 
-        void append(const uint8 *src, size_t cnt)
+        void append(const uint8_t *src, size_t cnt)
         {
             if (!cnt)
                 return;
@@ -395,14 +395,14 @@ namespace P2pClouds {
             }
         }
 
-        void insert(size_t pos, const uint8 *src, size_t cnt)
+        void insert(size_t pos, const uint8_t *src, size_t cnt)
         {
             data_.insert(data_.begin() + pos, cnt, 0);
             memcpy(&data_[pos], src, cnt);
             wpos_ += cnt;
         }
 
-        void put(size_t pos, const uint8 *src, size_t cnt)
+        void put(size_t pos, const uint8_t *src, size_t cnt)
         {
             if(pos + cnt > size())
             throw ByteBuffer::Exception(true, pos, cnt, size());
@@ -421,7 +421,7 @@ namespace P2pClouds {
 
             for(size_t i = rpos(); i < wpos(); ++i)
             {
-                p2pclouds_snprintf(buf, 1024, "%u ", read<uint8>(i));
+                p2pclouds_snprintf(buf, 1024, "%u ", read<uint8_t>(i));
                 fbuffer += buf;
             }
 
@@ -442,7 +442,7 @@ namespace P2pClouds {
 
             for (size_t i = rpos(); i < wpos(); ++i)
             {
-                p2pclouds_snprintf(buf, 1024, "%c", read<uint8>(i));
+                p2pclouds_snprintf(buf, 1024, "%c", read<uint8_t>(i));
                 fbuffer += buf;
             }
 
@@ -454,7 +454,7 @@ namespace P2pClouds {
 
         void hexlike() const
         {
-            uint32 j = 1, k = 1;
+            uint32_t j = 1, k = 1;
             char buf[1024];
             std::string fbuffer;
             size_t trpos = rpos_;
@@ -462,34 +462,34 @@ namespace P2pClouds {
             p2pclouds_snprintf(buf, 1024, "STORAGE_SIZE: %lu, rpos=%lu.\n", (unsigned long)wpos(), (unsigned long)rpos());
             fbuffer += buf;
             
-            uint32 i = 0;
+            uint32_t i = 0;
             for (size_t idx = rpos(); idx < wpos(); ++idx)
             {
                 ++i;
                 if ((i == (j * 8)) && ((i != (k * 16))))
                 {
-                    if (read<uint8>(idx) < 0x10)
+                    if (read<uint8_t>(idx) < 0x10)
                     {
-                        p2pclouds_snprintf(buf, 1024, "| 0%X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "| 0%X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
                     else
                     {
-                        p2pclouds_snprintf(buf, 1024, "| %X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "| %X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
                     ++j;
                 }
                 else if (i == (k * 16))
                 {
-                    if (read<uint8>(idx) < 0x10)
+                    if (read<uint8_t>(idx) < 0x10)
                     {
-                        p2pclouds_snprintf(buf, 1024, "\n0%X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "\n0%X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
                     else
                     {
-                        p2pclouds_snprintf(buf, 1024, "\n%X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "\n%X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
 
@@ -498,14 +498,14 @@ namespace P2pClouds {
                 }
                 else
                 {
-                    if (read<uint8>(idx) < 0x10)
+                    if (read<uint8_t>(idx) < 0x10)
                     {
-                        p2pclouds_snprintf(buf, 1024, "0%X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "0%X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
                     else
                     {
-                        p2pclouds_snprintf(buf, 1024, "%X ", read<uint8>(idx));
+                        p2pclouds_snprintf(buf, 1024, "%X ", read<uint8_t>(idx));
                         fbuffer += buf;
                     }
                 }
@@ -520,7 +520,7 @@ namespace P2pClouds {
 
     protected:
         mutable size_t rpos_, wpos_;
-        std::vector<uint8> data_;
+        std::vector<uint8_t> data_;
     };
 
 
