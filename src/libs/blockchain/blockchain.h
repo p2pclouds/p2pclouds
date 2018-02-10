@@ -26,6 +26,11 @@ namespace P2pClouds {
 			return chain_;
 		}
 
+		uint32_t proofOfWork(const uint256_t& payloadHash, uint32_t bits);
+		bool validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits);
+
+		bool mine();
+
 	protected:
 		std::list< BlockPtr > chain_;
 		std::list< TransactionPtr > currentTransactions_;

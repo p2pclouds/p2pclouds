@@ -1,4 +1,5 @@
 #include "blockchain.h"
+#include "common/hash256.h"
 
 namespace P2pClouds {
 
@@ -48,4 +49,51 @@ namespace P2pClouds {
 	{
 		return chain_.back();
 	}
+
+	uint32_t Blockchain::proofOfWork(const uint256_t& payloadHash, uint32_t bits)
+	{
+		uint32_t proof = 0;
+
+		while (!validProof(payloadHash, proof, bits))
+		{
+			++proof;
+		}
+
+		return proof;
+	}
+
+	bool Blockchain::validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits)
+	{
+		Hash256 hash256;
+
+		hash256.update(&proof, sizeof(proof));
+		hash256.update(payloadHash.begin(), payloadHash.size());
+
+		std::string guess = hash256.getHash().toString();
+
+		for(uint32_t i=0; i<bits; ++i)
+		{
+			if (guess[i] != '0')
+				return false;
+		}
+
+		printf("proofOfWork---%s, proof=%d\n", guess.c_str(), proof);
+		return true;
+	}
+
+	bool Blockchain::mine()
+	{
+		BlockPtr lastblock = lastBlock();
+
+		uint32_t proof = proofOfWork(lastblock->getHash(), lastblock->bits());
+
+		// Generate a globally unique address for this node
+		std::string nodeIdentifier = "myHashaddr";
+		createNewTransaction("0", nodeIdentifier, 1);
+
+		createNewBlock(proof, lastblock->getHash());
+
+		return true;
+	}
+
 }

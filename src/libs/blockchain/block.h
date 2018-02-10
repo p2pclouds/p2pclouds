@@ -44,6 +44,14 @@ namespace P2pClouds {
 			return proof_;
 		}
 
+		void bits(uint32_t val) {
+			bits_ = val;
+		}
+
+		uint32_t bits() const {
+			return bits_;
+		}
+
 		void previousHash(const uint256_t& val) {
 			previousHash_ = val;
 		}
@@ -58,8 +66,9 @@ namespace P2pClouds {
 		uint32_t index_;
 		uint32_t timestamp_;
 		std::list< TransactionPtr > transactions_;
-		uint32_t proof_;
 		uint256_t previousHash_;
+		uint32_t bits_;
+		uint32_t proof_;
 	};
 
 	typedef std::shared_ptr<Block> BlockPtr;

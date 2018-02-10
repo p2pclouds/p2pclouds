@@ -41,8 +41,8 @@ namespace P2pClouds {
 	{
 		Blockchain b;
 		uint256_t hash = b.lastBlock()->getHash();
-		std::string xxx = hash.toString();
-		printf("-blockhash---%s\n", xxx.c_str());
+
+		b.mine();
 		return App::run();
 	}
 
