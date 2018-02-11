@@ -1,5 +1,5 @@
 #include "blockchain.h"
-#include "common/hash256.h"
+#include "common/hash.h"
 
 namespace P2pClouds {
 

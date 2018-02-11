@@ -159,6 +159,7 @@ namespace P2pClouds {
 #endif
 #endif
 
+	typedef uint160													uint160_t;
 	typedef uint256													uint256_t;
 
     // Common buff size, such as: path、name、IP

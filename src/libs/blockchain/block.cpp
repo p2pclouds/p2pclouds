@@ -1,6 +1,6 @@
 #include "block.h"
 #include "common/byte_buffer.h"
-#include "common/hash256.h"
+#include "common/hash.h"
 
 namespace P2pClouds {
 
@@ -26,7 +26,9 @@ namespace P2pClouds {
 		previousHash_.serialize(stream);
 
 		for (auto& item : transactions_)
-			stream << item->getHash();
+		{
+			item->getHash().serialize(stream);
+		}
 
 		Hash256 hash256;
 		hash256.update(stream);
