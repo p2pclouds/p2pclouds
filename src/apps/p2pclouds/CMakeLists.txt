@@ -22,6 +22,7 @@ target_link_libraries(p2pclouds libopenssl)
 IF(UNIX)
 target_link_libraries(p2pclouds pthread)
 ELSE(UNIX)
+target_link_libraries(p2pclouds Crypt32)
 ENDIF(UNIX)
 
 

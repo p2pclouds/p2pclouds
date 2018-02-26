@@ -24,6 +24,6 @@ namespace P2pClouds {
 	#define LOG_ERROR(msg, ...) P2pClouds::Singleton<P2pClouds::Log>::instance()->getLogger()->error(msg"  -> {}:{}()#{}.", ##__VA_ARGS__, __FILE__, __func__, __LINE__)
 	#define LOG_WARNING(msg, ...) P2pClouds::Singleton<P2pClouds::Log>::instance()->getLogger()->debug(msg, ##__VA_ARGS__)
 	#define LOG_INFO(msg, ...) P2pClouds::Singleton<P2pClouds::Log>::instance()->getLogger()->debug(msg, ##__VA_ARGS__)
-	#define LOG_CRITICAL(msg, ...) P2pClouds::Singleton<P2pClouds::Log>::instance()->getLogger()->critical(msg"  -> {}:{}()#{}.", ##__VA_ARGS__, __FILE__, __func__, __LINE__)
+	#define LOG_CRITICAL(msg, ...) P2pClouds::Singleton<P2pClouds::Log>::instance()->getLogger()->critical(msg"  -> {}:{}()#{}.", ##__VA_ARGS__, __FILE__, __func__, __LINE__); assert(false)
 
 }

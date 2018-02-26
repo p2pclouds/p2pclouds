@@ -22,6 +22,7 @@ target_link_libraries(testapp libopenssl)
 IF(UNIX)
 target_link_libraries(testapp pthread)
 ELSE(UNIX)
+target_link_libraries(testapp Crypt32)
 ENDIF(UNIX)
 
 

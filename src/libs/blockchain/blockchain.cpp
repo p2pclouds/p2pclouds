@@ -1,5 +1,6 @@
 #include "blockchain.h"
 #include "common/hash.h"
+#include <openssl/bn.h>
 
 namespace P2pClouds {
 
@@ -50,48 +51,121 @@ namespace P2pClouds {
 		return chain_.back();
 	}
 
-	uint32_t Blockchain::proofOfWork(const uint256_t& payloadHash, uint32_t bits)
+	bool Blockchain::proofOfWork(const uint256_t& payloadHash, uint32_t bits, uint32_t& outProof, uint256_t& outHash)
 	{
 		uint32_t proof = 0;
 
-		while (!validProof(payloadHash, proof, bits))
+		for (; proof < pow(2, 32); ++proof)
 		{
-			++proof;
+			if (validProof(payloadHash, proof, bits, outHash))
+			{
+				outProof = proof;
+				return true;
+			}
 		}
 
-		return proof;
+		outProof = proof;
+		return false;
 	}
 
-	bool Blockchain::validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits)
+	bool Blockchain::validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits, uint256_t& outHash)
 	{
-		Hash256 hash256;
+		Hash256 hash256_1;
 
-		hash256.update(&proof, sizeof(proof));
-		hash256.update(payloadHash.begin(), payloadHash.size());
+		hash256_1.update(payloadHash.begin(), payloadHash.size());
+		hash256_1.update(&proof, sizeof(proof));
 
-		std::string guess = hash256.getHash().toString();
+		Hash256 hash256_2;
+		hash256_2.update(hash256_1.getHash().begin(), uint256::WIDTH);
 
-		for(uint32_t i=0; i<bits; ++i)
+		std::string sHashResult = hash256_2.getHash().toString();
+		BIGNUM* hashResult = BN_new();
+
+		if(!BN_hex2bn(&hashResult, sHashResult.c_str()))
 		{
-			if (guess[i] != '0')
-				return false;
+			LOG_CRITICAL("BN_hex2bn error!");
+			return false;
 		}
 
-		printf("proofOfWork---%s, proof=%d\n", guess.c_str(), proof);
-		return true;
+		BN_CTX *ctx = BN_CTX_new();
+		if (!ctx)
+		{
+			LOG_CRITICAL("BN_CTX_new error!");
+			return false;
+		}
+
+		BIGNUM* target = BN_new();
+
+		if (!BN_set_word(target, 2))
+		{
+			LOG_CRITICAL("BN_set_word error!");
+			return false;
+		}
+
+		BIGNUM* difficultyBits = BN_new();
+		if (!BN_set_word(difficultyBits, 256 - bits))
+		{
+			LOG_CRITICAL("BN_set_word error!");
+			return false;
+		}
+
+		if (!BN_exp(target, target, difficultyBits, ctx))
+		{
+			LOG_CRITICAL("BN_exp error!");
+			return false;
+		}
+
+		bool found = BN_cmp(hashResult, target) < 0;
+
+		if(found)
+		{
+			outHash = uint256S(sHashResult);
+		}
+
+		BN_free(target);
+		BN_free(difficultyBits);
+		BN_free(hashResult);
+		BN_CTX_free(ctx);
+		return found;
 	}
 
 	bool Blockchain::mine()
 	{
-		BlockPtr lastblock = lastBlock();
+		for (int difficultyBits = 0; difficultyBits < 32; ++difficultyBits)
+		{
+			int difficulty = pow(2, difficultyBits);
+			BlockPtr lastblock = lastBlock();
 
-		uint32_t proof = proofOfWork(lastblock->getHash(), lastblock->bits());
+			uint32_t proof = 0;
+			uint256_t hashResult;
 
-		// Generate a globally unique address for this node
-		std::string nodeIdentifier = "myHashaddr";
-		createNewTransaction("0", nodeIdentifier, 1);
+			LOG_DEBUG("Starting search...");
 
-		createNewBlock(proof, lastblock->getHash());
+			time_t start_timestamp = getTimeStamp();
+
+			if (proofOfWork(lastblock->getHash(), difficultyBits/*lastblock->bits()*/, proof, hashResult))
+			{
+				float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
+				float hashPower = proof / elapsedTime;
+
+				// Generate a globally unique address for this node
+				createNewTransaction("0", hashResult.toString(), 1);
+
+				createNewBlock(proof, lastblock->getHash());
+
+				LOG_DEBUG("Success with proof: {}", proof);
+				LOG_DEBUG("Hash: {}", hashResult.toString());
+				LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
+				LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
+				LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, difficultyBits);
+				LOG_DEBUG("");
+			}
+			else
+			{
+				LOG_ERROR("Failed after {} (maxProof) tries)", proof);
+				LOG_DEBUG("");
+			}
+		}
 
 		return true;
 	}

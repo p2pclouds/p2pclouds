@@ -26,8 +26,8 @@ namespace P2pClouds {
 			return chain_;
 		}
 
-		uint32_t proofOfWork(const uint256_t& payloadHash, uint32_t bits);
-		bool validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits);
+		bool proofOfWork(const uint256_t& payloadHash, uint32_t bits, uint32_t& outProof, uint256_t& outHash);
+		bool validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits, uint256_t& outHash);
 
 		bool mine();
 
