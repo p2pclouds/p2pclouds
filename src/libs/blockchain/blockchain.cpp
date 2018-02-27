@@ -4,6 +4,8 @@
 
 namespace P2pClouds {
 
+	uint256_t Blockchain::difficulty_1_target = uint256S("0x00000000FFFF0000000000000000000000000000000000000000000000000000");
+
 	Blockchain::Blockchain()
 		: chain_()
 		, currentTransactions_()

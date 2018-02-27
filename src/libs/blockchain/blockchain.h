@@ -10,6 +10,8 @@ namespace P2pClouds {
 	class Blockchain
 	{
 	public:
+		static uint256_t difficulty_1_target;
+
 		Blockchain();
 		virtual ~Blockchain();
 

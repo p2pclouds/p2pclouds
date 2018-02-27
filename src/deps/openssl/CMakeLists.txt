@@ -117,5 +117,11 @@ add_library(libopenssl INTERFACE)
 target_include_directories(libopenssl SYSTEM INTERFACE "${OPENSSL_INSTALL_DIR}/include")
 target_link_libraries(libopenssl INTERFACE "${OPENSSL_INSTALL_DIR}/lib/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
 target_link_libraries(libopenssl INTERFACE "${OPENSSL_INSTALL_DIR}/lib/libssl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+
+
+IF(UNIX)
 target_link_libraries(libopenssl INTERFACE dl)
+ELSE(UNIX)
+ENDIF(UNIX)
+
 add_dependencies(libopenssl openssl)
