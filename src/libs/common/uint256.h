@@ -13,140 +13,144 @@
 #include <string>
 #include <vector>
 
-/** Template base class for fixed-sized opaque blobs. */
-template<unsigned int BITS>
-class base_blob
-{
-public:
-	static constexpr int WIDTH = BITS / 8;
+namespace P2pClouds {
 
-protected:
-    uint8_t data[WIDTH];
+	/** Template base class for fixed-sized opaque blobs. */
+	template<unsigned int BITS>
+	class base_blob
+	{
+	public:
+		static constexpr int WIDTH = BITS / 8;
 
-public:
-    base_blob()
-    {
-        memset(data, 0, sizeof(data));
-    }
+	protected:
+		uint8_t data[WIDTH];
 
-    explicit base_blob(const std::vector<unsigned char>& vch);
+	public:
+		base_blob()
+		{
+			memset(data, 0, sizeof(data));
+		}
 
-    bool isNull() const
-    {
-        for (int i = 0; i < WIDTH; i++)
-            if (data[i] != 0)
-                return false;
-        return true;
-    }
+		explicit base_blob(const std::vector<unsigned char>& vch);
 
-    void setNull()
-    {
-        memset(data, 0, sizeof(data));
-    }
+		bool isNull() const
+		{
+			for (int i = 0; i < WIDTH; i++)
+				if (data[i] != 0)
+					return false;
+			return true;
+		}
 
-    inline int compare(const base_blob& other) const { return memcmp(data, other.data, sizeof(data)); }
+		void setNull()
+		{
+			memset(data, 0, sizeof(data));
+		}
 
-    friend inline bool operator==(const base_blob& a, const base_blob& b) { return a.Compare(b) == 0; }
-    friend inline bool operator!=(const base_blob& a, const base_blob& b) { return a.Compare(b) != 0; }
-    friend inline bool operator<(const base_blob& a, const base_blob& b) { return a.Compare(b) < 0; }
+		inline int compare(const base_blob& other) const { return memcmp(data, other.data, sizeof(data)); }
 
-    std::string getHex() const;
-    void setHex(const char* psz);
-    void setHex(const std::string& str);
-    std::string toString() const;
+		friend inline bool operator==(const base_blob& a, const base_blob& b) { return a.Compare(b) == 0; }
+		friend inline bool operator!=(const base_blob& a, const base_blob& b) { return a.Compare(b) != 0; }
+		friend inline bool operator<(const base_blob& a, const base_blob& b) { return a.Compare(b) < 0; }
 
-    unsigned char* begin()
-    {
-        return &data[0];
-    }
+		std::string getHex() const;
+		void setHex(const char* psz);
+		void setHex(const std::string& str);
+		std::string toString() const;
 
-    unsigned char* end()
-    {
-        return &data[WIDTH];
-    }
+		unsigned char* begin()
+		{
+			return &data[0];
+		}
 
-    const unsigned char* begin() const
-    {
-        return &data[0];
-    }
+		unsigned char* end()
+		{
+			return &data[WIDTH];
+		}
 
-    const unsigned char* end() const
-    {
-        return &data[WIDTH];
-    }
+		const unsigned char* begin() const
+		{
+			return &data[0];
+		}
 
-    unsigned int size() const
-    {
-        return sizeof(data);
-    }
+		const unsigned char* end() const
+		{
+			return &data[WIDTH];
+		}
 
-    uint64_t getUint64(int pos) const
-    {
-        const uint8_t* ptr = data + pos * 8;
-        return ((uint64_t)ptr[0]) | \
-               ((uint64_t)ptr[1]) << 8 | \
-               ((uint64_t)ptr[2]) << 16 | \
-               ((uint64_t)ptr[3]) << 24 | \
-               ((uint64_t)ptr[4]) << 32 | \
-               ((uint64_t)ptr[5]) << 40 | \
-               ((uint64_t)ptr[6]) << 48 | \
-               ((uint64_t)ptr[7]) << 56;
-    }
+		unsigned int size() const
+		{
+			return sizeof(data);
+		}
 
-	template<typename ByteBuffer>
-    void serialize(ByteBuffer& s) const
-    {
-		s.append((char*)data, sizeof(data));
-    }
+		uint64_t getUint64(int pos) const
+		{
+			const uint8_t* ptr = data + pos * 8;
+			return ((uint64_t)ptr[0]) | \
+				((uint64_t)ptr[1]) << 8 | \
+				((uint64_t)ptr[2]) << 16 | \
+				((uint64_t)ptr[3]) << 24 | \
+				((uint64_t)ptr[4]) << 32 | \
+				((uint64_t)ptr[5]) << 40 | \
+				((uint64_t)ptr[6]) << 48 | \
+				((uint64_t)ptr[7]) << 56;
+		}
 
-	template<typename ByteBuffer>
-    void unserialize(ByteBuffer& s)
-    {
-        s.read((char*)data, sizeof(data));
-    }
-};
+		template<typename ByteBuffer>
+		void serialize(ByteBuffer& s) const
+		{
+			s.append((char*)data, sizeof(data));
+		}
 
-/** 160-bit opaque blob.
- * @note This type is called uint160 for historical reasons only. It is an opaque
- * blob of 160 bits and has no integer operations.
- */
-class uint160 : public base_blob<160> {
-public:
-    uint160() {}
-    explicit uint160(const std::vector<unsigned char>& vch) : base_blob<160>(vch) {}
-};
+		template<typename ByteBuffer>
+		void unserialize(ByteBuffer& s)
+		{
+			s.read((char*)data, sizeof(data));
+		}
+	};
 
-/** 256-bit opaque blob.
- * @note This type is called uint256 for historical reasons only. It is an
- * opaque blob of 256 bits and has no integer operations. Use arith_uint256 if
- * those are required.
- */
-class uint256 : public base_blob<256> {
-public:
-    uint256() {}
-    explicit uint256(const std::vector<unsigned char>& vch) : base_blob<256>(vch) {}
+	/** 160-bit opaque blob.
+	 * @note This type is called uint160 for historical reasons only. It is an opaque
+	 * blob of 160 bits and has no integer operations.
+	 */
+	class uint160 : public base_blob<160> {
+	public:
+		uint160() {}
+		explicit uint160(const std::vector<unsigned char>& vch) : base_blob<160>(vch) {}
+	};
 
-};
+	/** 256-bit opaque blob.
+	 * @note This type is called uint256 for historical reasons only. It is an
+	 * opaque blob of 256 bits and has no integer operations. Use arith_uint256 if
+	 * those are required.
+	 */
+	class uint256 : public base_blob<256> {
+	public:
+		uint256() {}
+		explicit uint256(const std::vector<unsigned char>& vch) : base_blob<256>(vch) {}
 
-/* uint256 from const char *.
- * This is a separate function because the constructor uint256(const char*) can result
- * in dangerously catching uint256(0).
- */
-inline uint256 uint256S(const char *str)
-{
-    uint256 rv;
-    rv.setHex(str);
-    return rv;
-}
-/* uint256 from std::string.
- * This is a separate function because the constructor uint256(const std::string &str) can result
- * in dangerously catching uint256(0) via std::string(const char*).
- */
-inline uint256 uint256S(const std::string& str)
-{
-    uint256 rv;
-    rv.setHex(str);
-    return rv;
+	};
+
+	/* uint256 from const char *.
+	 * This is a separate function because the constructor uint256(const char*) can result
+	 * in dangerously catching uint256(0).
+	 */
+	inline uint256 uint256S(const char *str)
+	{
+		uint256 rv;
+		rv.setHex(str);
+		return rv;
+	}
+	/* uint256 from std::string.
+	 * This is a separate function because the constructor uint256(const std::string &str) can result
+	 * in dangerously catching uint256(0) via std::string(const char*).
+	 */
+	inline uint256 uint256S(const std::string& str)
+	{
+		uint256 rv;
+		rv.setHex(str);
+		return rv;
+	}
+
 }
 
 #endif // BITCOIN_UINT256_H

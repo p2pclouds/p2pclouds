@@ -2,6 +2,7 @@
 #include "log/log.h"
 #include "test_app.h"
 
+#include "common/arith_uint256.h"
 DEFINE_uint64(id, 0, "the server id");
 
 int main(int argc, char *argv[])
