@@ -10,26 +10,27 @@ namespace P2pClouds {
 	class Blockchain
 	{
 	public:
-		static uint256_t difficulty_1_target;
+		static arith_uint256 p_difficulty_1_target;
+		static arith_uint256 b_difficulty_1_target;
 
 		Blockchain();
 		virtual ~Blockchain();
 
 		void createGenesisBlock();
 
-		BlockPtr createNewBlock(uint32_t proof, const uint256_t& previousHash);
+		BlockPtr createNewBlock(uint32_t proof, const uint256_t& hashPrevBlock);
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
 
-		std::string hashBlock(BlockPtr block);
+		std::string hashBlock(BlockPtr pBlock);
 
 		std::list< BlockPtr >& chain() {
 			return chain_;
 		}
 
-		bool proofOfWork(const uint256_t& payloadHash, uint32_t bits, uint32_t& outProof, uint256_t& outHash);
-		bool validProof(const uint256_t& payloadHash, uint32_t proof, uint32_t bits, uint256_t& outHash);
+		bool proofOfWork(BlockPtr pBlock);
+		bool validProof(const uint256_t& hash, uint32_t proof, uint32_t bits);
 
 		bool mine();
 

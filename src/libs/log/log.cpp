@@ -43,14 +43,14 @@ namespace P2pClouds {
 			spdlog::register_logger(logger_);
 
 #ifdef _DEBUG  
-			logger_->set_level(spdlog::level::trace);
+			logger_->set_level(spdlog::level::debug);
 #else  
-			logger_->set_level(spdlog::level::err);
+			logger_->set_level(spdlog::level::debug);
 #endif
 
 			logger_->set_pattern("*** [%Y-%m-%d %H:%M:%S] %L %v");
 
-			logger_->flush_on(spdlog::level::err);
+			logger_->flush_on(spdlog::level::debug);
 		}
 		catch (const spdlog::spdlog_ex& ex)
 		{

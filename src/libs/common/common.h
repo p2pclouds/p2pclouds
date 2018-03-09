@@ -71,6 +71,8 @@
 #include "common/version.h"
 #include "common/singleton.h"
 #include "common/uint256.h"
+#include "common/arith_uint256.h"
+
 #include "utf8.h"
 #include <gflags/gflags.h>
 #include <asio.hpp>

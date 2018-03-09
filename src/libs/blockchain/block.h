@@ -6,27 +6,35 @@
 
 namespace P2pClouds {
 
-	class Block : public std::enable_shared_from_this<Block>
+	class BlockHeader
+	{
+	public:
+		int32_t version;
+		uint256 hashPrevBlock;
+		uint256 hashMerkleRoot;
+		uint32_t timestamp;
+		uint32_t bits;
+		uint32_t proof;
+
+		BlockHeader()
+			: version(P2PCLOUDS_VERSION)
+			, hashPrevBlock()
+			, hashMerkleRoot()
+			, timestamp(0)
+			, bits(0x1d00ffff)
+			, proof(0)
+
+		{
+		}
+
+		uint256_t getHash() const;
+	};
+
+	class Block : public BlockHeader, public std::enable_shared_from_this<Block>
 	{
 	public:
 		Block();
 		virtual ~Block();
-
-		void index(uint32_t val) {
-			index_ = val;
-		}
-
-		uint32_t index() const {
-			return index_;
-		}
-
-		void timestamp(uint32_t val) {
-			timestamp_ = val;
-		}
-
-		uint32_t timestamp() const {
-			return timestamp_;
-		}
 
 		void transactions(const std::list< TransactionPtr >& vals) {
 			transactions_ = vals;
@@ -36,39 +44,17 @@ namespace P2pClouds {
 			return transactions_;
 		}
 
-		void proof(uint32_t val) {
-			proof_ = val;
+		void index(uint32_t val) {
+			index_ = val;
 		}
 
-		uint32_t proof() const {
-			return proof_;
+		uint32_t index() const {
+			return index_;
 		}
-
-		void bits(uint32_t val) {
-			bits_ = val;
-		}
-
-		uint32_t bits() const {
-			return bits_;
-		}
-
-		void previousHash(const uint256_t& val) {
-			previousHash_ = val;
-		}
-
-		uint256_t previousHash() const {
-			return previousHash_;
-		}
-
-		uint256_t getHash() const;
 
 	protected:
 		uint32_t index_;
-		uint32_t timestamp_;
 		std::list< TransactionPtr > transactions_;
-		uint256_t previousHash_;
-		uint32_t bits_;
-		uint32_t proof_;
 	};
 
 	typedef std::shared_ptr<Block> BlockPtr;

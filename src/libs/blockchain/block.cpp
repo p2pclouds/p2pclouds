@@ -4,35 +4,31 @@
 
 namespace P2pClouds {
 
+	uint256_t BlockHeader::getHash() const
+	{
+		ByteBuffer stream;
+
+		stream << version;
+		hashPrevBlock.serialize(stream);
+		hashMerkleRoot.serialize(stream);
+		stream << timestamp << proof;
+
+		Hash256 hash2561;
+		hash2561.update(stream);
+
+		Hash256 hash2562;
+		hash2562.update(hash2561.getHash().begin(), uint256::WIDTH);
+		return hash2562.getHash();
+	}
+
 	Block::Block()
-		: index_(0)
-		, timestamp_(0)
+		: BlockHeader()
+		, index_(0)
 		, transactions_()
-		, previousHash_()
-		, proof_(0)
-		, bits_(4)
 	{
 	}
 
 	Block::~Block()
 	{
-	}
-
-	uint256_t Block::getHash() const
-	{
-		ByteBuffer stream;
-
-		stream << index_ << timestamp_ << proof_;
-		previousHash_.serialize(stream);
-
-		for (auto& item : transactions_)
-		{
-			item->getHash().serialize(stream);
-		}
-
-		Hash256 hash256;
-		hash256.update(stream);
-
-		return hash256.getHash();
 	}
 }
