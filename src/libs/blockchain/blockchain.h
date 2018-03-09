@@ -18,25 +18,26 @@ namespace P2pClouds {
 
 		void createGenesisBlock();
 
-		BlockPtr createNewBlock(uint32_t proof, const uint256_t& hashPrevBlock);
+		BlockPtr createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain = true);
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
-
-		std::string hashBlock(BlockPtr pBlock);
 
 		std::list< BlockPtr >& chain() {
 			return chain_;
 		}
 
-		bool proofOfWork(BlockPtr pBlock);
-		bool validProof(const uint256_t& hash, uint32_t proof, uint32_t bits);
+		void addBlockToChain(BlockPtr& pBlock)
+		{
+			chain_.push_back(pBlock);
+		}
 
+		bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
 		bool mine();
 
 	protected:
 		std::list< BlockPtr > chain_;
-		std::list< TransactionPtr > currentTransactions_;
+		std::vector< TransactionPtr > currentTransactions_;
 	};
 
 }

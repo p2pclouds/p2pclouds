@@ -42,7 +42,9 @@ namespace P2pClouds {
 		Blockchain b;
 		uint256_t hash = b.lastBlock()->getHash();
 
-		b.mine();
+		while(true)
+			b.mine();
+
 		return App::run();
 	}
 

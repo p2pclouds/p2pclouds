@@ -48,9 +48,9 @@ namespace P2pClouds {
 
 		inline int compare(const base_blob& other) const { return memcmp(data, other.data, sizeof(data)); }
 
-		friend inline bool operator==(const base_blob& a, const base_blob& b) { return a.Compare(b) == 0; }
-		friend inline bool operator!=(const base_blob& a, const base_blob& b) { return a.Compare(b) != 0; }
-		friend inline bool operator<(const base_blob& a, const base_blob& b) { return a.Compare(b) < 0; }
+		friend inline bool operator==(const base_blob& a, const base_blob& b) { return a.compare(b) == 0; }
+		friend inline bool operator!=(const base_blob& a, const base_blob& b) { return a.compare(b) != 0; }
+		friend inline bool operator<(const base_blob& a, const base_blob& b) { return a.compare(b) < 0; }
 
 		std::string getHex() const;
 		void setHex(const char* psz);

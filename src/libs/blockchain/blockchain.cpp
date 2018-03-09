@@ -1,4 +1,5 @@
 #include "blockchain.h"
+#include "merkle.h"
 #include "common/hash.h"
 
 namespace P2pClouds {
@@ -19,21 +20,35 @@ namespace P2pClouds {
 
 	void Blockchain::createGenesisBlock()
 	{
-		createNewBlock(100, uint256S("1"));
+		createNewBlock(0, 0, uint256S("1"));
 	}
 
-	BlockPtr Blockchain::createNewBlock(uint32_t proof, const uint256_t& hashPrevBlock)
+	BlockPtr Blockchain::createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
 	{
 		BlockPtr pBlock = std::make_shared<Block>();
 
 		pBlock->index((uint32_t)chain().size() + 1);
 		pBlock->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
 		pBlock->proof = proof;
-		pBlock->transactions(currentTransactions_);
 		pBlock->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : lastBlock()->getHash();
 
+		// coin base
+		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
+		pBaseTransaction->proof(extraProof);
+		pBaseTransaction->amount(0);
+		pBaseTransaction->recipient("0");
+		pBaseTransaction->sender("0");
+		pBlock->transactions().push_back(pBaseTransaction);
+
+		// packing Transactions
+		pBlock->addTransactions(currentTransactions_);
+
 		currentTransactions_.clear();
-		chain_.push_back(pBlock);
+		pBlock->hashMerkleRoot = BlockMerkleRoot(*pBlock);
+
+		if (pushToChain)
+			addBlockToChain(pBlock);
+
 		return pBlock;
 	}
 
@@ -53,20 +68,7 @@ namespace P2pClouds {
 		return chain_.back();
 	}
 
-	bool Blockchain::proofOfWork(BlockPtr pBlock)
-	{
-		pBlock->proof = 0;
-
-		for (; pBlock->proof < pow(2, 32); ++pBlock->proof)
-		{
-			if (validProof(pBlock->getHash(), pBlock->proof, pBlock->bits))
-				return true;
-		}
-
-		return false;
-	}
-
-	bool Blockchain::validProof(const uint256_t& hash, uint32_t proof, uint32_t bits)
+	bool Blockchain::validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits)
 	{
 		bool isNegative;
 		bool isOverflow;
@@ -88,44 +90,67 @@ namespace P2pClouds {
 
 	bool Blockchain::mine()
 	{
+		//LOG_DEBUG("Starting search...");
 
-		while(true)
+		const int innerLoopCount = 0x10000;
+		uint64_t maxTries = 1000000;
+		unsigned int extraProof = 0;
+
+		time_t start_timestamp = getTimeStamp();
+		BlockPtr pLastblock = lastBlock();
+		BlockPtr pFoundBlock;
+		float difficulty = 1.f;
+
+		while (maxTries > 0)
 		{
-			BlockPtr pLastblock = lastBlock();
-			BlockPtr pNewBlock = createNewBlock(0, pLastblock->getHash());
+			BlockPtr pNewBlock = createNewBlock(0, extraProof++, pLastblock->getHash(), false);
 
 			arith_uint256 target;
 			target.setCompact(pNewBlock->bits);
 
-			float difficulty = (b_difficulty_1_target / target).getdouble();
+			difficulty = (float)(b_difficulty_1_target / target).getdouble();
 
-			LOG_DEBUG("Starting search...");
-
-			time_t start_timestamp = getTimeStamp();
-
-			if (proofOfWork(pNewBlock))
+			while (maxTries > 0 && pNewBlock->proof < innerLoopCount && !validProofOfWork(pNewBlock->getHash(), pNewBlock->proof, pNewBlock->bits))
 			{
-				float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
-				float hashPower = pNewBlock->proof / elapsedTime;
-
-				// Generate a globally unique address for this node
-				createNewTransaction("0", pNewBlock->getHash().toString(), 1);
-
-				LOG_DEBUG("Success with proof: {}", pNewBlock->proof);
-				LOG_DEBUG("Hash: {}", pNewBlock->getHash().toString());
-				LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
-				LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
-				LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, pNewBlock->bits);
-				LOG_DEBUG("");
+				--maxTries;
+				++pNewBlock->proof;
 			}
-			else
+
+			if (pNewBlock->proof >= innerLoopCount)
 			{
-				LOG_ERROR("Failed after {} (maxProof) tries)", pNewBlock->proof);
-				LOG_DEBUG("");
+				//LOG_ERROR("Failed after {} (maxProof) tries)", pNewBlock->proof);
+				//LOG_DEBUG("");
+				continue;
 			}
+
+			if (maxTries == 0) 
+			{
+				//LOG_ERROR("Failed after {} (maxTries) tries)", 1000000 - maxTries);
+				//LOG_DEBUG("");
+				break;
+			}
+
+			pFoundBlock = pNewBlock;
+			break;
 		}
+
+		if (!pFoundBlock)
+			return false;
+
+		float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
+		float hashPower = pFoundBlock->proof / elapsedTime;
+
+		addBlockToChain(pFoundBlock);
+
+		LOG_DEBUG("Success with proof: {}", pFoundBlock->proof);
+		LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
+		LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
+		LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
+		LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, pFoundBlock->bits);
+		LOG_DEBUG("");
 
 		return true;
 	}
 
 }
+

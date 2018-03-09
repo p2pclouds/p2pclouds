@@ -34,13 +34,28 @@ namespace P2pClouds {
 	{
 	public:
 		Block();
+
+		Block(const BlockHeader &header)
+			: BlockHeader()
+			, index_(0)
+			, transactions_()
+		{
+			*(static_cast<BlockHeader*>(this)) = header;
+		}
+
 		virtual ~Block();
 
-		void transactions(const std::list< TransactionPtr >& vals) {
+		typedef std::vector< TransactionPtr > TRANSACTIONS;
+
+		void transactions(const TRANSACTIONS& vals) {
 			transactions_ = vals;
 		}
 
-		std::list< TransactionPtr >& transactions() {
+		void addTransactions(const TRANSACTIONS& vals) {
+			transactions_.insert(transactions_.end(), vals.begin(), vals.end());
+		}
+
+		TRANSACTIONS& transactions() {
 			return transactions_;
 		}
 
@@ -52,9 +67,21 @@ namespace P2pClouds {
 			return index_;
 		}
 
+		BlockHeader blockHeader() const
+		{
+			BlockHeader block;
+			block.version = version;
+			block.hashPrevBlock = hashPrevBlock;
+			block.hashMerkleRoot = hashMerkleRoot;
+			block.timestamp = timestamp;
+			block.bits = bits;
+			block.proof = proof;
+			return block;
+		}
+
 	protected:
 		uint32_t index_;
-		std::list< TransactionPtr > transactions_;
+		TRANSACTIONS transactions_;
 	};
 
 	typedef std::shared_ptr<Block> BlockPtr;
