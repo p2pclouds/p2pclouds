@@ -14,12 +14,12 @@ namespace P2pClouds {
 		hashMerkleRoot.serialize(stream);
 		stream << timestamp << proof;
 
-		Hash256 hash2561;
-		hash2561.update(stream);
+        uint256_t hash2561;
+        SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
 
-		Hash256 hash2562;
-		hash2562.update(hash2561.getHash().begin(), uint256::WIDTH);
-		return hash2562.getHash();
+        uint256_t hash2562;
+        SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+		return hash2562;
 	}
 
 	Block::Block()
