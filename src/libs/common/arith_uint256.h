@@ -290,11 +290,12 @@ namespace P2pClouds {
 
 		friend uint256 arithToUint256(const arith_uint256 &);
 		friend arith_uint256 uintToArith256(const uint256 &);
+        friend void uintToArith256(arith_uint256&, const uint256 &);
 	};
 
 	uint256 arithToUint256(const arith_uint256 &);
 	arith_uint256 uintToArith256(const uint256 &);
-
+    void uintToArith256(arith_uint256&, const uint256 &);
 }
 
 #endif // BITCOIN_ARITH_UINT256_H

@@ -80,7 +80,8 @@ namespace P2pClouds {
 		if (isNegative || target == 0 || isOverflow || target > p_difficulty_1_target)
 			return false;
 
-		arith_uint256 hashResult(hash.toString());
+        arith_uint256 hashResult;
+        uintToArith256(hashResult, hash);
 
 		if (hashResult > target)
 			return false;

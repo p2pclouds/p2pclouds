@@ -280,5 +280,9 @@ namespace P2pClouds {
 
 		return b;
 	}
-
+    void uintToArith256(arith_uint256& out, const uint256 &a)
+    {
+        for (int x = 0; x < out.WIDTH; ++x)
+            out.pn[x] = readLE32(a.begin() + x * 4);
+    }
 }
