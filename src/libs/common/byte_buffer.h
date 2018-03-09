@@ -59,7 +59,7 @@ namespace P2pClouds {
         void clear(bool clearData)
         {
             if(clearData)
-            data_.clear();
+                data_.clear();
 
             rpos_ = wpos_ = 0;
         }

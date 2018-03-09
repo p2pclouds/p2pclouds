@@ -6,8 +6,9 @@ namespace P2pClouds {
 
 	uint256_t BlockHeader::getHash() const
 	{
-		ByteBuffer stream;
-
+		static ByteBuffer stream;
+        
+        stream.clear(false);
 		stream << version;
 		hashPrevBlock.serialize(stream);
 		hashMerkleRoot.serialize(stream);

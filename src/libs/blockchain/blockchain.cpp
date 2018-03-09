@@ -93,11 +93,11 @@ namespace P2pClouds {
 	{
 		//LOG_DEBUG("Starting search...");
 
-		const int innerLoopCount = pow(2, 32) - 1;
+		const int innerLoopCount = 0x1000000;
 		uint64_t maxTries = pow(2, 32) - 1;
 		unsigned int extraProof = 0;
 
-		time_t start_timestamp = getTimeStamp();
+		time_t start_timestamp = 0;
 		BlockPtr pLastblock = lastBlock();
 		BlockPtr pFoundBlock;
 		float difficulty = 1.f;
@@ -110,7 +110,8 @@ namespace P2pClouds {
 			target.setCompact(pNewBlock->bits);
 
 			difficulty = (float)(b_difficulty_1_target / target).getdouble();
-
+            start_timestamp = getTimeStamp();
+            
 			while (maxTries > 0 && pNewBlock->proof < innerLoopCount && !validProofOfWork(pNewBlock->getHash(), pNewBlock->proof, pNewBlock->bits))
 			{
 				--maxTries;
@@ -118,7 +119,7 @@ namespace P2pClouds {
 			}
 
 			if (pNewBlock->proof >= innerLoopCount)
-			{
+            {
 				//LOG_ERROR("Failed after {} (maxProof) tries)", pNewBlock->proof);
 				//LOG_DEBUG("");
 				continue;
