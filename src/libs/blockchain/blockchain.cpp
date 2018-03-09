@@ -93,7 +93,7 @@ namespace P2pClouds {
 	{
 		//LOG_DEBUG("Starting search...");
 
-		const int innerLoopCount = 0x10000;
+		const int innerLoopCount = pow(2, 32) - 1;
 		uint64_t maxTries = pow(2, 32) - 1;
 		unsigned int extraProof = 0;
 
