@@ -118,18 +118,18 @@ namespace P2pClouds {
 				++pNewBlock->proof;
 			}
 
+            if (maxTries == 0)
+            {
+                //LOG_ERROR("Failed after {} (maxTries) tries)", 1000000 - maxTries);
+                //LOG_DEBUG("");
+                break;
+            }
+            
 			if (pNewBlock->proof >= innerLoopCount)
             {
 				//LOG_ERROR("Failed after {} (maxProof) tries)", pNewBlock->proof);
 				//LOG_DEBUG("");
 				continue;
-			}
-
-			if (maxTries == 0) 
-			{
-				//LOG_ERROR("Failed after {} (maxTries) tries)", 1000000 - maxTries);
-				//LOG_DEBUG("");
-				break;
 			}
 
 			pFoundBlock = pNewBlock;
