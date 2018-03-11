@@ -93,16 +93,17 @@ namespace P2pClouds {
 	{
 		//LOG_DEBUG("Starting search...");
 
-		const int innerLoopCount = 0x1000000;
+		const int innerLoopCount = 0x10000;
 		uint64_t maxTries = pow(2, 32) - 1;
+        uint64_t tries = 0;
 		unsigned int extraProof = 0;
 
-		time_t start_timestamp = 0;
+		time_t start_timestamp = getTimeStamp();
 		BlockPtr pLastblock = lastBlock();
 		BlockPtr pFoundBlock;
 		float difficulty = 1.f;
 
-		while (maxTries > 0)
+		while (true)
 		{
 			BlockPtr pNewBlock = createNewBlock(0, extraProof++, pLastblock->getHash(), false);
 
@@ -110,18 +111,17 @@ namespace P2pClouds {
 			target.setCompact(pNewBlock->bits);
 
 			difficulty = (float)(b_difficulty_1_target / target).getdouble();
-            start_timestamp = getTimeStamp();
             
-			while (maxTries > 0 && pNewBlock->proof < innerLoopCount && !validProofOfWork(pNewBlock->getHash(), pNewBlock->proof, pNewBlock->bits))
+			while (tries < maxTries && pNewBlock->proof < innerLoopCount && !validProofOfWork(pNewBlock->getHash(), pNewBlock->proof, pNewBlock->bits))
 			{
-				--maxTries;
+				++tries;
 				++pNewBlock->proof;
 			}
 
-            if (maxTries == 0)
+            if (tries == maxTries)
             {
-                //LOG_ERROR("Failed after {} (maxTries) tries)", 1000000 - maxTries);
-                //LOG_DEBUG("");
+                LOG_ERROR("Failed after {} (maxTries) tries)", maxTries);
+                LOG_DEBUG("");
                 break;
             }
             
@@ -139,14 +139,16 @@ namespace P2pClouds {
 		if (!pFoundBlock)
 			return false;
 
+        uint64_t proof = (tries * innerLoopCount) + pFoundBlock->proof;
 		float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
-		float hashPower = pFoundBlock->proof / elapsedTime;
-
+		float hashPower = proof / elapsedTime;
+        
 		addBlockToChain(pFoundBlock);
 
-		LOG_DEBUG("Success with proof: {}", pFoundBlock->proof);
+		LOG_DEBUG("Success with proof: {}", proof);
 		LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
 		LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
+        LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2,32)) / hashPower / 60));
 		LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
 		LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, pFoundBlock->bits);
 		LOG_DEBUG("");
