@@ -120,8 +120,6 @@ namespace P2pClouds {
 
             if (tries == maxTries)
             {
-                LOG_ERROR("Failed after {} (maxTries) tries)", maxTries);
-                LOG_DEBUG("");
                 break;
             }
             
@@ -137,24 +135,26 @@ namespace P2pClouds {
 		}
 
 		if (!pFoundBlock)
-			return false;
+        {
+            LOG_ERROR("Mine Failed! tries={})", tries);
+            LOG_DEBUG("");
+            return false;
+        }
 
-        uint64_t proof = (tries * innerLoopCount) + pFoundBlock->proof;
+        uint64_t proof = tries;
 		float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
 		float hashPower = proof / elapsedTime;
         
 		addBlockToChain(pFoundBlock);
 
-		LOG_DEBUG("Success with proof: {}", proof);
+        LOG_DEBUG("Success with proof: {}", proof);
 		LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
 		LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
         LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2,32)) / hashPower / 60));
 		LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
 		LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, pFoundBlock->bits);
 		LOG_DEBUG("");
-
 		return true;
 	}
-
 }
 
