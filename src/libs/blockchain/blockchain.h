@@ -4,6 +4,7 @@
 
 #include "block.h"
 #include "transaction.h"
+#include "common/threadpool.h"
 
 namespace P2pClouds {
 
@@ -33,11 +34,13 @@ namespace P2pClouds {
 		}
 
 		bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
-		bool mine();
+        bool proofOfWork();
+		bool start(int numThreads = std::thread::hardware_concurrency());
 
 	protected:
 		std::list< BlockPtr > chain_;
 		std::vector< TransactionPtr > currentTransactions_;
+        ThreadPool<ThreadContex>* pThreadPool_;
 	};
 
 }

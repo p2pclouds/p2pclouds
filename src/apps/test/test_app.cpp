@@ -40,11 +40,7 @@ namespace P2pClouds {
 	bool TestApp::run()
 	{
 		Blockchain b;
-		uint256_t hash = b.lastBlock()->getHash();
-
-		while(true)
-			b.mine();
-
+        b.start();
 		return App::run();
 	}
 

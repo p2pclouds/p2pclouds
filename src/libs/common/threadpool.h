@@ -69,7 +69,7 @@ namespace P2pClouds {
 		ThreadPool(size_t threads = std::thread::hardware_concurrency());
 		template<class F, class... Args>
 		auto enqueue(F&& f, Args&&... args)
-			->std::future<typename std::result_of<F(XServer::ThreadContex& context, Args...)>::type>;
+			->std::future<typename std::result_of<F(P2pClouds::ThreadContex& context, Args...)>::type>;
 		~ThreadPool();
 	private:
 		// need to keep track of threads so we can join them
@@ -120,11 +120,11 @@ namespace P2pClouds {
 	template<class THREAD_CONTEXT>
 	template<class F, class... Args>
 	auto ThreadPool<THREAD_CONTEXT>::enqueue(F&& f, Args&&... args)
-		-> std::future<typename std::result_of<F(XServer::ThreadContex& context, Args...)>::type>
+		-> std::future<typename std::result_of<F(P2pClouds::ThreadContex& context, Args...)>::type>
 	{
-		using return_type = typename std::result_of<F(XServer::ThreadContex& context, Args...)>::type;
+		using return_type = typename std::result_of<F(P2pClouds::ThreadContex& context, Args...)>::type;
 
-		auto task = std::make_shared< std::packaged_task<return_type(XServer::ThreadContex& context)> >(
+		auto task = std::make_shared< std::packaged_task<return_type(P2pClouds::ThreadContex& context)> >(
 			std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Args>(args)...)
 			);
 

@@ -6,13 +6,10 @@ namespace P2pClouds {
 
 	uint256_t BlockHeader::getHash() const
 	{
-		static ByteBuffer stream;
+		ByteBuffer stream;
         
         stream.clear(false);
-		stream << version;
-		hashPrevBlock.serialize(stream);
-		hashMerkleRoot.serialize(stream);
-		stream << timestamp << proof;
+        serialize(stream);
 
         uint256_t hash2561;
         SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
@@ -22,6 +19,14 @@ namespace P2pClouds {
 		return hash2562;
 	}
 
+    void BlockHeader::serialize(ByteBuffer& stream) const
+    {
+        stream << version;
+        hashPrevBlock.serialize(stream);
+        hashMerkleRoot.serialize(stream);
+        stream << timestamp << bits << proof;
+    }
+    
 	Block::Block()
 		: BlockHeader()
 		, index_(0)

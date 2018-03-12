@@ -10,12 +10,14 @@ namespace P2pClouds {
 	Blockchain::Blockchain()
 		: chain_()
 		, currentTransactions_()
+        , pThreadPool_(NULL)
 	{
 		createGenesisBlock();
 	}
 
 	Blockchain::~Blockchain()
 	{
+        SAFE_RELEASE(pThreadPool_);
 	}
 
 	void Blockchain::createGenesisBlock()
@@ -89,9 +91,30 @@ namespace P2pClouds {
 		return true;
 	}
 
-	bool Blockchain::mine()
+    bool Blockchain::start(int numThreads)
+    {
+        SAFE_RELEASE(pThreadPool_);
+        pThreadPool_ = new ThreadPool<ThreadContex>(numThreads);
+        LOG_DEBUG("Starting Blockchain(numThreads={})", numThreads);
+        
+        for(int i=0; i<numThreads; ++i)
+        {
+            Blockchain* pBlockchain = this;
+            pThreadPool_->enqueue([pBlockchain](ThreadContex& context)
+            {
+                while(true)
+                    pBlockchain->proofOfWork();
+                
+                return true;
+            });
+        }
+        
+        return true;
+    }
+    
+	bool Blockchain::proofOfWork()
 	{
-		//LOG_DEBUG("Starting search...");
+		LOG_DEBUG("Starting search...");
 
 		const int innerLoopCount = 0x10000;
 		uint64_t maxTries = pow(2, 32) - 1;
@@ -105,18 +128,31 @@ namespace P2pClouds {
 
 		while (true)
 		{
-			BlockPtr pNewBlock = createNewBlock(0, extraProof++, pLastblock->getHash(), false);
+			BlockPtr pNewBlock = createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
 
 			arith_uint256 target;
 			target.setCompact(pNewBlock->bits);
 
 			difficulty = (float)(b_difficulty_1_target / target).getdouble();
             
-			while (tries < maxTries && pNewBlock->proof < innerLoopCount && !validProofOfWork(pNewBlock->getHash(), pNewBlock->proof, pNewBlock->bits))
+            ByteBuffer stream;
+            pNewBlock->serialize(stream);
+
+            int woffset = stream.wpos() - sizeof(pNewBlock->proof);
+            
+            uint256_t hash2561;
+            uint256_t hash2562;
+            
+			do
 			{
 				++tries;
 				++pNewBlock->proof;
-			}
+                
+                stream.wpos(woffset);
+                stream << pNewBlock->proof;
+                SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
+                SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+            } while (tries < maxTries && pNewBlock->proof < innerLoopCount && !validProofOfWork(hash2562, pNewBlock->proof, pNewBlock->bits));
 
             if (tries == maxTries)
             {
@@ -136,7 +172,7 @@ namespace P2pClouds {
 
 		if (!pFoundBlock)
         {
-            LOG_ERROR("Mine Failed! tries={})", tries);
+            LOG_ERROR("Failed to proof of work! tries={})", tries);
             LOG_DEBUG("");
             return false;
         }

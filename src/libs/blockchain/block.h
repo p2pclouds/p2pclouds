@@ -5,7 +5,8 @@
 #include "transaction.h"
 
 namespace P2pClouds {
-
+    class ByteBuffer;
+    
 	class BlockHeader
 	{
 	public:
@@ -28,6 +29,7 @@ namespace P2pClouds {
 		}
 
 		uint256_t getHash() const;
+        void serialize(ByteBuffer& stream) const;
 	};
 
 	class Block : public BlockHeader, public std::enable_shared_from_this<Block>
