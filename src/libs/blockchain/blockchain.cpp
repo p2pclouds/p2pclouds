@@ -152,7 +152,7 @@ namespace P2pClouds {
 		LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
         LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2,32)) / hashPower / 60));
 		LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
-		LOG_DEBUG("Difficulty: {} ({} bits)", difficulty, pFoundBlock->bits);
+        LOG_DEBUG("Difficulty: {} (bits: {})", difficulty, pFoundBlock->bits);
 		LOG_DEBUG("");
 		return true;
 	}
