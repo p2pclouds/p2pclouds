@@ -4,6 +4,7 @@
 
 #include "common/arith_uint256.h"
 DEFINE_uint64(id, 0, "the server id");
+DEFINE_int32(numThreads, 0, "num threads");
 
 int main(int argc, char *argv[])
 {
@@ -12,7 +13,7 @@ int main(int argc, char *argv[])
 
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-	P2pClouds::TestApp app;
+	P2pClouds::TestApp app(FLAGS_id, FLAGS_numThreads);
 
 	try
 	{

@@ -6,8 +6,8 @@
 
 namespace P2pClouds {
 
-	P2pCloudsApp::P2pCloudsApp()
-		: App()
+	P2pCloudsApp::P2pCloudsApp(uint64_t id, int32_t numThreads)
+		: App(id, numThreads)
 	{
 	}
 

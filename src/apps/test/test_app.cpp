@@ -6,8 +6,8 @@
 
 namespace P2pClouds {
 
-	TestApp::TestApp()
-		: App()
+	TestApp::TestApp(uint64_t id, int32_t numThreads)
+		: App(id, numThreads)
 	{
 	}
 
@@ -40,7 +40,7 @@ namespace P2pClouds {
 	bool TestApp::run()
 	{
 		Blockchain b;
-        b.start();
+        b.start(numThreads());
 		return App::run();
 	}
 

@@ -7,7 +7,7 @@ namespace P2pClouds {
 	class TestApp : public App
 	{
 	public:
-		TestApp();
+		TestApp(uint64_t id, int32_t numThreads);
 		virtual ~TestApp();
 
 		bool initialize() override;

@@ -7,7 +7,7 @@ namespace P2pClouds {
 	class P2pCloudsApp : public App
 	{
 	public:
-		P2pCloudsApp();
+		P2pCloudsApp(uint64_t id, int32_t numThreads);
 		virtual ~P2pCloudsApp();
 
 		bool initialize() override;

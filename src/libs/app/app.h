@@ -10,7 +10,7 @@ namespace P2pClouds {
 	class App
 	{
 	public:
-		App();
+		App(uint64_t id, int32_t numThreads);
 		virtual ~App();
 
 		virtual bool initialize();
@@ -20,6 +20,15 @@ namespace P2pClouds {
 
 		virtual bool run();
 
+        uint64_t id() const {
+            return id_;
+        }
+        
+        int32_t numThreads() const
+        {
+            return numThreads_;
+        }
+        
 	protected:
 		// Wait for a request to stop the server.
 		virtual void doAwaitStop();
@@ -32,6 +41,9 @@ namespace P2pClouds {
 
 		// The signal_set is used to register for process termination notifications.
 		asio::signal_set signals_;
+        
+        uint64_t id_;
+        int32_t numThreads_;
 	};
 
 }

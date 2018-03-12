@@ -93,6 +93,9 @@ namespace P2pClouds {
 
     bool Blockchain::start(int numThreads)
     {
+        if(numThreads == 0)
+            numThreads = std::thread::hardware_concurrency();
+
         SAFE_RELEASE(pThreadPool_);
         pThreadPool_ = new ThreadPool<ThreadContex>(numThreads);
         LOG_DEBUG("Starting Blockchain(numThreads={})", numThreads);

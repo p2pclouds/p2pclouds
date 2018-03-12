@@ -3,6 +3,7 @@
 #include "p2pclouds_app.h"
 
 DEFINE_uint64(id, 0, "the server id");
+DEFINE_int32(numThreads, 0, "num threads");
 
 int main(int argc, char *argv[])
 {
@@ -11,7 +12,7 @@ int main(int argc, char *argv[])
 
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-	P2pClouds::P2pCloudsApp app;
+	P2pClouds::P2pCloudsApp app(FLAGS_id, FLAGS_numThreads);
 
 	try
 	{

@@ -3,10 +3,12 @@
 
 namespace P2pClouds {
 
-	App::App()
+	App::App(uint64_t id, int32_t numThreads)
 		: pNetworkInterface_(NULL)
 		, ioService_()
 		, signals_(ioService_)
+        , id_(id)
+        , numThreads_(numThreads)
 	{
 		doAwaitStop();
 	}
