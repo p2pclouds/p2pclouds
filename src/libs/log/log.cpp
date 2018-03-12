@@ -48,7 +48,7 @@ namespace P2pClouds {
 			logger_->set_level(spdlog::level::debug);
 #endif
 
-			logger_->set_pattern("*** [%Y-%m-%d %H:%M:%S] %L %v");
+			logger_->set_pattern("[%Y-%m-%d %H:%M:%S] %t %L %v");
 
 			logger_->flush_on(spdlog::level::debug);
 		}
