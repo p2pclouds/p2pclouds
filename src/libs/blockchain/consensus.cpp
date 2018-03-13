@@ -135,7 +135,7 @@ namespace P2pClouds {
         
         pBlockchain()->addBlockToChain(pFoundBlock);
         
-        LOG_DEBUG("Success with proof: {}", proof);
+        LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->index());
         LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
         LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
         LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2,32)) / hashPower / 60));
