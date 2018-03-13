@@ -13,7 +13,6 @@ namespace P2pClouds {
         , mutex_()
 	{
         pConsensus_ = std::shared_ptr<Consensus>(new ConsensusPow(this));
-		createGenesisBlock();
 	}
 
 	Blockchain::~Blockchain()
@@ -21,61 +20,32 @@ namespace P2pClouds {
         SAFE_RELEASE(pThreadPool_);
 	}
 
-	void Blockchain::createGenesisBlock()
+	void Blockchain::addBlockToChain(BlockPtr& pBlock)
 	{
-		createNewBlock(0, 0, uint256S("1"));
-	}
+        std::lock_guard<std::recursive_mutex> lg(mutex_);
 
-	BlockPtr Blockchain::createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
-	{
-		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
-        
-		pBlock->index((uint32_t)chain().size() + 1);
-		pBlockHeaderPoW->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
-		pBlockHeaderPoW->proof = proof;
-		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : lastBlock()->getHash();
-
-		// coin base
-		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
-		pBaseTransaction->proof(extraProof);
-		pBaseTransaction->amount(0);
-		pBaseTransaction->recipient("0");
-		pBaseTransaction->sender("0");
-		pBlock->transactions().push_back(pBaseTransaction);
-
-		// packing Transactions
-		pBlock->addTransactions(currentTransactions_);
-        pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
-		
-		if (pushToChain)
-			addBlockToChain(pBlock);
-
-        std::lock_guard<std::mutex> lg(mutex_);
-        currentTransactions_.clear();
-		return pBlock;
+		chain_.push_back(pBlock);
+		pBlock->index((uint32_t)chain().size());
+		currentTransactions_.erase(currentTransactions_.begin(), currentTransactions_.begin() + pBlock->transactions().size() - 1);
 	}
 
 	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount)
 	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+
 		TransactionPtr pTransaction = std::make_shared<Transaction>();
 		pTransaction->amount(amount);
 		pTransaction->recipient(recipient);
 		pTransaction->sender(sender);
 
-        size_t chainSizeS = 0;
-        {
-            std::lock_guard<std::mutex> lg(mutex_);
-            currentTransactions_.push_back(pTransaction);
-            chainSizeS = chain_.size();
-        }
+        currentTransactions_.push_back(pTransaction);
 
-		return chainSizeS > 0 ? (lastBlock()->index() + 1) : 0;
+		return chain_.size() > 0 ? (lastBlock()->index() + 1) : 0;
 	}
 
 	BlockPtr Blockchain::lastBlock()
 	{
-        std::lock_guard<std::mutex> lg(mutex_);
+        std::lock_guard<std::recursive_mutex> lg(mutex_);
 		return chain_.back();
 	}
 

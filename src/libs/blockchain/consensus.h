@@ -4,6 +4,9 @@
 
 namespace P2pClouds {
 
+    class Block;
+    typedef std::shared_ptr<Block> BlockPtr;
+    
     class Blockchain;
     
 	class Consensus : public std::enable_shared_from_this<Consensus>
@@ -35,6 +38,10 @@ namespace P2pClouds {
         bool build() override;
         bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
         
+    	void createGenesisBlock();
+
+		BlockPtr createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain = true);
+
     protected:
     };
     

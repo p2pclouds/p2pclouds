@@ -17,22 +17,21 @@ namespace P2pClouds {
 		Blockchain();
 		virtual ~Blockchain();
 
-		void createGenesisBlock();
-
-		BlockPtr createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain = true);
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
 
 		std::list< BlockPtr >& chain() {
+			std::lock_guard<std::recursive_mutex> lg(mutex_);
 			return chain_;
 		}
 
-		void addBlockToChain(BlockPtr& pBlock)
-		{
-            std::lock_guard<std::mutex> lg(mutex_);
-			chain_.push_back(pBlock);
+		std::vector< TransactionPtr >& currentTransactions() {
+			std::lock_guard<std::recursive_mutex> lg(mutex_);
+			return currentTransactions_;
 		}
+
+		void addBlockToChain(BlockPtr& pBlock);
 
         ConsensusPtr pConsensus();
         
@@ -43,7 +42,7 @@ namespace P2pClouds {
         ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;
         ThreadPool< ThreadContex >* pThreadPool_;
-        std::mutex mutex_;
+        std::recursive_mutex mutex_;
 	};
 
 }

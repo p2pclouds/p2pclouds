@@ -21,12 +21,46 @@ namespace P2pClouds {
     ConsensusPow::ConsensusPow(Blockchain* pBlockchain)
     : Consensus(pBlockchain)
     {
+        createGenesisBlock();
     }
     
     ConsensusPow::~ConsensusPow()
     {
     }
     
+    void ConsensusPow::createGenesisBlock()
+	{
+		createNewBlock(0, 0, uint256S("1"));
+	}
+
+    BlockPtr ConsensusPow::createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
+	{
+		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
+        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+        
+		pBlock->index(0);
+		pBlockHeaderPoW->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
+		pBlockHeaderPoW->proof = proof;
+		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
+
+		// coin base
+		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
+		pBaseTransaction->proof(extraProof);
+		pBaseTransaction->amount(0);
+		pBaseTransaction->recipient("0");
+		pBaseTransaction->sender("0");
+		pBlock->transactions().push_back(pBaseTransaction);
+
+		// packing Transactions
+		pBlock->addTransactions(pBlockchain()->currentTransactions());
+        pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
+		
+		if (pushToChain)
+			pBlockchain()->addBlockToChain(pBlock);
+
+		return pBlock;
+	}
+
     bool ConsensusPow::build()
     {
         LOG_DEBUG("Starting search...");
@@ -43,7 +77,7 @@ namespace P2pClouds {
         
         while (true)
         {
-            BlockPtr pNewBlock = pBlockchain()->createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
+            BlockPtr pNewBlock = createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
             
             arith_uint256 target;
