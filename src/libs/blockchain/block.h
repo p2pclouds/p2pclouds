@@ -7,7 +7,21 @@
 namespace P2pClouds {
     class ByteBuffer;
     
-	class BlockHeader
+    class BlockHeader
+    {
+    public:
+        BlockHeader() {
+        }
+        
+        virtual ~BlockHeader()
+        {
+        }
+        
+        virtual uint256_t getHash() const = 0;
+        virtual void serialize(ByteBuffer& stream) const = 0;
+    };
+    
+    class BlockHeaderPoW : public BlockHeader
 	{
 	public:
 		int32_t version;
@@ -17,8 +31,9 @@ namespace P2pClouds {
 		uint32_t bits;
 		uint32_t proof;
 
-		BlockHeader()
-			: version(P2PCLOUDS_VERSION)
+		BlockHeaderPoW()
+			: BlockHeader()
+            , version(P2PCLOUDS_VERSION)
 			, hashPrevBlock()
 			, hashMerkleRoot()
 			, timestamp(0)
@@ -28,21 +43,24 @@ namespace P2pClouds {
 		{
 		}
 
-		uint256_t getHash() const;
-        void serialize(ByteBuffer& stream) const;
+        virtual ~BlockHeaderPoW()
+        {
+        }
+        
+		uint256_t getHash() const override;
+        void serialize(ByteBuffer& stream) const override;
 	};
 
-	class Block : public BlockHeader, public std::enable_shared_from_this<Block>
+	class Block : public std::enable_shared_from_this<Block>
 	{
 	public:
 		Block();
 
-		Block(const BlockHeader &header)
-			: BlockHeader()
-			, index_(0)
+		Block(BlockHeader* pBlockHeader)
+			: index_(0)
 			, transactions_()
+            , pBlockHeader_(pBlockHeader)
 		{
-			*(static_cast<BlockHeader*>(this)) = header;
 		}
 
 		virtual ~Block();
@@ -69,21 +87,19 @@ namespace P2pClouds {
 			return index_;
 		}
 
-		BlockHeader blockHeader() const
+		BlockHeader* pBlockHeader()
 		{
-			BlockHeader block;
-			block.version = version;
-			block.hashPrevBlock = hashPrevBlock;
-			block.hashMerkleRoot = hashMerkleRoot;
-			block.timestamp = timestamp;
-			block.bits = bits;
-			block.proof = proof;
-			return block;
+			return pBlockHeader_;
 		}
 
+        virtual uint256_t getHash() const {
+            return pBlockHeader_->getHash();
+        }
+        
 	protected:
 		uint32_t index_;
 		TRANSACTIONS transactions_;
+        BlockHeader* pBlockHeader_;
 	};
 
 	typedef std::shared_ptr<Block> BlockPtr;

@@ -8,12 +8,12 @@
 
 namespace P2pClouds {
 
+    class Consensus;
+    typedef std::shared_ptr<Consensus> ConsensusPtr;
+
 	class Blockchain
 	{
 	public:
-		static arith_uint256 p_difficulty_1_target;
-		static arith_uint256 b_difficulty_1_target;
-
 		Blockchain();
 		virtual ~Blockchain();
 
@@ -30,17 +30,20 @@ namespace P2pClouds {
 
 		void addBlockToChain(BlockPtr& pBlock)
 		{
+            std::lock_guard<std::mutex> lg(mutex_);
 			chain_.push_back(pBlock);
 		}
 
-		bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
-        bool proofOfWork();
+        ConsensusPtr pConsensus();
+        
 		bool start(int numThreads = std::thread::hardware_concurrency());
 
 	protected:
 		std::list< BlockPtr > chain_;
+        ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;
-        ThreadPool<ThreadContex>* pThreadPool_;
+        ThreadPool< ThreadContex >* pThreadPool_;
+        std::mutex mutex_;
 	};
 
 }

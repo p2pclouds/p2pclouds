@@ -4,7 +4,7 @@
 
 namespace P2pClouds {
 
-	uint256_t BlockHeader::getHash() const
+	uint256_t BlockHeaderPoW::getHash() const
 	{
 		ByteBuffer stream;
         
@@ -19,7 +19,7 @@ namespace P2pClouds {
 		return hash2562;
 	}
 
-    void BlockHeader::serialize(ByteBuffer& stream) const
+    void BlockHeaderPoW::serialize(ByteBuffer& stream) const
     {
         stream << version;
         hashPrevBlock.serialize(stream);
@@ -28,13 +28,14 @@ namespace P2pClouds {
     }
     
 	Block::Block()
-		: BlockHeader()
-		, index_(0)
+		: index_(0)
 		, transactions_()
+        , pBlockHeader_(new BlockHeaderPoW())
 	{
 	}
 
 	Block::~Block()
 	{
+        SAFE_RELEASE(pBlockHeader_);
 	}
 }
