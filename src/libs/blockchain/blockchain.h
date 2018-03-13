@@ -35,7 +35,7 @@ namespace P2pClouds {
 			return currentTransactions_;
 		}
 
-		void addBlockToChain(BlockPtr& pBlock);
+		bool addBlockToChain(BlockPtr& pBlock);
 
         ConsensusPtr pConsensus();
         
@@ -47,7 +47,7 @@ namespace P2pClouds {
 
         ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;
-		
+
         ThreadPool< ThreadContex >* pThreadPool_;
         std::recursive_mutex mutex_;
 	};

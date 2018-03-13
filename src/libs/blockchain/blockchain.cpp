@@ -21,13 +21,20 @@ namespace P2pClouds {
         SAFE_RELEASE(pThreadPool_);
 	}
 
-	void Blockchain::addBlockToChain(BlockPtr& pBlock)
+	bool Blockchain::addBlockToChain(BlockPtr& pBlock)
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
+		if(pBlock->index() != (chainSize_ + 1))
+			return false;
+
 		chain_.push_back(pBlock);
-		pBlock->index(++chainSize_);
-		currentTransactions_.erase(currentTransactions_.begin(), currentTransactions_.begin() + pBlock->transactions().size() - 1);
+		++chainSize_;
+
+		currentTransactions_.erase(currentTransactions_.begin(), 
+			currentTransactions_.begin() + pBlock->transactions().size() - 1);
+
+		return true;
 	}
 
 	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount)

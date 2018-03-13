@@ -38,7 +38,7 @@ namespace P2pClouds {
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
-		pBlock->index(0);
+		pBlock->index(pBlockchain()->chainSize() + 1);
 		pBlockHeaderPoW->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
@@ -141,7 +141,8 @@ namespace P2pClouds {
     	if(pBlockHeaderPoW->hashPrevBlock != pBlockchain()->lastBlock()->getHash())
 			return false;
 
-        pBlockchain()->addBlockToChain(pFoundBlock);
+        if(!pBlockchain()->addBlockToChain(pFoundBlock))
+            return false;
         
         LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->index());
         LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
