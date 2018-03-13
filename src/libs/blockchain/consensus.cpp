@@ -74,9 +74,13 @@ namespace P2pClouds {
         BlockPtr pLastblock = pBlockchain()->lastBlock();
         BlockPtr pFoundBlock;
         float difficulty = 1.f;
-        
+        uint32_t chainSize = pBlockchain()->chainSize();
+
         while (true)
         {
+            if(chainSize != pBlockchain()->chainSize())
+                return false;
+
             BlockPtr pNewBlock = createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
             
@@ -102,6 +106,7 @@ namespace P2pClouds {
                 stream << pBlockHeaderPoW->proof;
                 SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
                 SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+
             } while (tries < maxTries && pBlockHeaderPoW->proof < innerLoopCount && !validProofOfWork(hash2562, pBlockHeaderPoW->proof, pBlockHeaderPoW->bits));
             
             if (tries == maxTries)
@@ -133,6 +138,9 @@ namespace P2pClouds {
         float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
         float hashPower = proof / elapsedTime;
         
+    	if(pBlockHeaderPoW->hashPrevBlock != pBlockchain()->lastBlock()->getHash())
+			return false;
+
         pBlockchain()->addBlockToChain(pFoundBlock);
         
         LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->index());

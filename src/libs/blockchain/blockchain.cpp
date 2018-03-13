@@ -7,6 +7,7 @@ namespace P2pClouds {
 
 	Blockchain::Blockchain()
 		: chain_()
+		, chainSize_(0)
         , pConsensus_()
 		, currentTransactions_()
         , pThreadPool_(NULL)
@@ -25,7 +26,7 @@ namespace P2pClouds {
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		chain_.push_back(pBlock);
-		pBlock->index((uint32_t)chain().size());
+		pBlock->index(++chainSize_);
 		currentTransactions_.erase(currentTransactions_.begin(), currentTransactions_.begin() + pBlock->transactions().size() - 1);
 	}
 
@@ -40,7 +41,7 @@ namespace P2pClouds {
 
         currentTransactions_.push_back(pTransaction);
 
-		return chain_.size() > 0 ? (lastBlock()->index() + 1) : 0;
+		return chainSize() > 0 ? (lastBlock()->index() + 1) : 0;
 	}
 
 	BlockPtr Blockchain::lastBlock()

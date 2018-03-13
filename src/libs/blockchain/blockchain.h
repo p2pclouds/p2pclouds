@@ -26,6 +26,10 @@ namespace P2pClouds {
 			return chain_;
 		}
 
+		uint32_t chainSize() const {
+			return chainSize_;
+		}
+
 		std::vector< TransactionPtr >& currentTransactions() {
 			std::lock_guard<std::recursive_mutex> lg(mutex_);
 			return currentTransactions_;
@@ -39,8 +43,11 @@ namespace P2pClouds {
 
 	protected:
 		std::list< BlockPtr > chain_;
+		uint32_t chainSize_;
+
         ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;
+		
         ThreadPool< ThreadContex >* pThreadPool_;
         std::recursive_mutex mutex_;
 	};
