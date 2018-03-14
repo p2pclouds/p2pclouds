@@ -63,7 +63,7 @@ namespace P2pClouds {
 
     bool ConsensusPow::build()
     {
-        LOG_DEBUG("Starting search...");
+        LOG_DEBUG("Starting build...");
         
         const int innerLoopCount = 0x10000;
         uint64_t maxTries = pow(2, 32) - 1;
@@ -79,7 +79,10 @@ namespace P2pClouds {
         while (true)
         {
             if(chainSize != pBlockchain()->chainSize())
+            {
+                LOG_DEBUG("chainSize({}) != currchainSize({}), build canceled!");
                 return false;
+            }
 
             BlockPtr pNewBlock = createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
