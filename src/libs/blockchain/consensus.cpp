@@ -42,6 +42,7 @@ namespace P2pClouds {
 		pBlockHeaderPoW->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
+        pBlockHeaderPoW->bits = getNextWorkTarget(pBlock);
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
@@ -80,7 +81,7 @@ namespace P2pClouds {
         {
             if(chainSize != pBlockchain()->chainSize())
             {
-                LOG_DEBUG("chainSize({}) != currchainSize({}), build canceled!");
+                LOG_DEBUG("chainSize({}) != currchainSize({}), build canceled!", chainSize, pBlockchain()->chainSize());
                 return false;
             }
 
@@ -176,5 +177,15 @@ namespace P2pClouds {
             return false;
         
         return true;
+    }
+
+    uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock)
+    {
+        return calculateNextWorkTarget(pBlock);
+    }
+
+    uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock)
+    {
+        return ((BlockHeaderPoW*)pBlock->pBlockHeader())->bits;
     }
 }
