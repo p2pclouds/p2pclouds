@@ -62,7 +62,7 @@ namespace P2pClouds {
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		BlockList::reverse_iterator rit = chain_.rbegin();
-		for (rit = chain_.rbegin(); rit!= chain_.rend(); ++rit)
+		for (; rit != chain_.rend(); ++rit)
 			if(--index == 0)
         		return (*rit);
 
