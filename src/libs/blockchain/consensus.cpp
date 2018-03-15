@@ -39,7 +39,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
 		pBlock->index(pBlockchain()->chainSize() + 1);
-		pBlockHeaderPoW->timestamp = (uint32_t)getSysTime();
+		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
         pBlockHeaderPoW->bits = getNextWorkTarget(pBlock);
@@ -199,7 +199,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pFirstBlockHeaderPoW = (BlockHeaderPoW*)pFirstBlock->pBlockHeader();
         BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastblock->pBlockHeader();
 
-        uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimestamp() - pFirstBlockHeaderPoW->getTimestamp();
+        uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimeval() - pFirstBlockHeaderPoW->getTimeval();
         const uint32_t cycleTimestamp = (14 * 24 * 60 * 60);
 
         if (diffTimestamp < cycleTimestamp / 4)

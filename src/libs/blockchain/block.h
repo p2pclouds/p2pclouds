@@ -27,7 +27,7 @@ namespace P2pClouds {
 		int32_t version;
 		uint256 hashPrevBlock;
 		uint256 hashMerkleRoot;
-		uint32_t timestamp;
+		uint32_t timeval;
 		uint32_t bits;
 		uint32_t proof;
 
@@ -36,7 +36,7 @@ namespace P2pClouds {
             , version(P2PCLOUDS_VERSION)
 			, hashPrevBlock()
 			, hashMerkleRoot()
-			, timestamp(0)
+			, timeval(0)
 			, bits(0x1d00ffff)
 			, proof(0)
 
@@ -47,7 +47,7 @@ namespace P2pClouds {
         {
         }
         
-		int64_t getTimestamp() const { return (int64_t)timestamp; }
+		int64_t getTimeval() const { return (int64_t)timeval; }
 		uint256_t getHash() const override;
         void serialize(ByteBuffer& stream) const override;
 	};

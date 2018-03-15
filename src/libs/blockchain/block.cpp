@@ -24,7 +24,7 @@ namespace P2pClouds {
         stream << version;
         hashPrevBlock.serialize(stream);
         hashMerkleRoot.serialize(stream);
-        stream << timestamp << bits << proof;
+        stream << timeval << bits << proof;
     }
     
 	Block::Block()
