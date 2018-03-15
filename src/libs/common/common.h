@@ -299,7 +299,11 @@ namespace P2pClouds {
 		return tmp.count();
 	}
 
-
+	inline time_t getSysTime()
+	{
+		return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	}
+	
     #define P2PCLOUDS_LITTLE_ENDIAN								0
     #define P2PCLOUDS_BIG_ENDIAN								1
 

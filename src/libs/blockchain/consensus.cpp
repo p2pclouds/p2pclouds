@@ -39,7 +39,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
 		pBlock->index(pBlockchain()->chainSize() + 1);
-		pBlockHeaderPoW->timestamp = (uint32_t)(getTimeStamp() & 0xfffffffful);
+		pBlockHeaderPoW->timestamp = (uint32_t)getSysTime();
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
         pBlockHeaderPoW->bits = getNextWorkTarget(pBlock);
