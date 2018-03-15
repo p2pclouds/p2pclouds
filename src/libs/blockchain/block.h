@@ -47,6 +47,7 @@ namespace P2pClouds {
         {
         }
         
+		int64_t getTimestamp() const { return (int64_t)timestamp; }
 		uint256_t getHash() const override;
         void serialize(ByteBuffer& stream) const override;
 	};

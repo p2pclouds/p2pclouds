@@ -71,7 +71,7 @@ namespace P2pClouds {
         uint64_t tries = 0;
         unsigned int extraProof = 0;
         
-        time_t start_timestamp = getTimeStamp();
+        time_t startTimestamp = getTimeStamp();
         BlockPtr pLastblock = pBlockchain()->lastBlock();
         BlockPtr pFoundBlock;
         float difficulty = 1.f;
@@ -139,7 +139,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pFoundBlock->pBlockHeader();
         
         uint64_t proof = tries;
-        float elapsedTime = float(getTimeStamp() - start_timestamp) / 1000.f;
+        float elapsedTime = float(getTimeStamp() - startTimestamp) / 1000.f;
         float hashPower = proof / elapsedTime;
         
     	if(pBlockHeaderPoW->hashPrevBlock != pBlockchain()->lastBlock()->getHash())
@@ -181,11 +181,42 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock)
     {
+        if(pBlock->index() < 2016 || pBlock->index() % 2016 != 1)
+        {
+            return ((BlockHeaderPoW*)pBlock->pBlockHeader())->bits;
+        }
+
         return calculateNextWorkTarget(pBlock);
     }
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock)
     {
-        return ((BlockHeaderPoW*)pBlock->pBlockHeader())->bits;
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(2016);
+        BlockPtr pLastblock = pBlockchain()->lastBlock();
+
+        assert(pFirstBlock.get() && pLastblock.get());
+
+        BlockHeaderPoW* pFirstBlockHeaderPoW = (BlockHeaderPoW*)pFirstBlock->pBlockHeader();
+        BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastblock->pBlockHeader();
+
+        uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimestamp() - pFirstBlockHeaderPoW->getTimestamp();
+        const uint32_t cycleTimestamp = (14 * 24 * 60 * 60);
+
+        if (diffTimestamp < cycleTimestamp / 4)
+            diffTimestamp = cycleTimestamp / 4;
+
+        if (diffTimestamp > cycleTimestamp * 4)
+            diffTimestamp = cycleTimestamp * 4;
+
+        arith_uint256 bnNew;
+        bnNew.setCompact(pLastBlockHeaderPoW->bits);
+
+        bnNew *= diffTimestamp;
+        bnNew /= cycleTimestamp;
+
+        if(bnNew > p_difficulty_1_target)
+            bnNew = p_difficulty_1_target;
+
+        return bnNew.getCompact();
     }
 }

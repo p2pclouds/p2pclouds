@@ -20,8 +20,10 @@ namespace P2pClouds {
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
+		BlockPtr getBlock(size_t index);
 
-		std::list< BlockPtr >& chain() {
+		typedef std::list< BlockPtr > BlockList;
+		BlockList& chain() {
 			std::lock_guard<std::recursive_mutex> lg(mutex_);
 			return chain_;
 		}
@@ -42,7 +44,7 @@ namespace P2pClouds {
 		bool start(int numThreads = std::thread::hardware_concurrency());
 
 	protected:
-		std::list< BlockPtr > chain_;
+		BlockList chain_;
 		uint32_t chainSize_;
 
         ConsensusPtr pConsensus_;
