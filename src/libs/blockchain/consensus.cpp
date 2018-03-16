@@ -30,10 +30,31 @@ namespace P2pClouds {
     
     void ConsensusPow::createGenesisBlock()
 	{
-		createNewBlock(0, 0, uint256S("1"));
+		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
+        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+        
+		pBlock->index(pBlockchain()->chainSize() + 1);
+		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
+		pBlockHeaderPoW->proof = 0;
+		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
+        pBlockHeaderPoW->bits = b_difficulty_1_target.getCompact();
+
+		// coin base
+		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
+		pBaseTransaction->proof(0);
+		pBaseTransaction->amount(0);
+		pBaseTransaction->recipient("0");
+		pBaseTransaction->sender("0");
+		pBlock->transactions().push_back(pBaseTransaction);
+
+		// packing Transactions
+		pBlock->addTransactions(pBlockchain()->currentTransactions());
+        pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
+
+		pBlockchain()->addBlockToChain(pBlock);
 	}
 
-    BlockPtr ConsensusPow::createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
+    BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
 	{
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
@@ -42,7 +63,7 @@ namespace P2pClouds {
 		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
-        pBlockHeaderPoW->bits = getNextWorkTarget(pBlock);
+        pBlockHeaderPoW->bits = (bits == 0 ? getNextWorkTarget(pBlock) : bits);
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
@@ -85,7 +106,7 @@ namespace P2pClouds {
                 return false;
             }
 
-            BlockPtr pNewBlock = createNewBlock(0, ++extraProof, pLastblock->getHash(), false);
+            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastblock->getHash(), false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
             
             arith_uint256 target;

@@ -40,7 +40,7 @@ namespace P2pClouds {
         
     	void createGenesisBlock();
 
-		BlockPtr createNewBlock(uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain = true);
+		BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain = true);
 
         uint32_t getNextWorkTarget(BlockPtr pBlock);
         uint32_t calculateNextWorkTarget(BlockPtr pBlock);

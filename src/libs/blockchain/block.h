@@ -37,7 +37,7 @@ namespace P2pClouds {
 			, hashPrevBlock()
 			, hashMerkleRoot()
 			, timeval(0)
-			, bits(0x1d00ffff)
+			, bits(0)
 			, proof(0)
 
 		{
