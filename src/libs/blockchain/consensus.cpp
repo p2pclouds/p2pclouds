@@ -15,8 +15,8 @@ namespace P2pClouds {
 	{
 	}
 
-    arith_uint256 ConsensusPow::p_difficulty_1_target("0x00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-    arith_uint256 ConsensusPow::b_difficulty_1_target("0x00000000FFFF0000000000000000000000000000000000000000000000000000");
+    arith_uint256 ConsensusPow::p_difficulty_1_target("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    arith_uint256 ConsensusPow::b_difficulty_1_target("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
     
     ConsensusPow::ConsensusPow(Blockchain* pBlockchain)
     : Consensus(pBlockchain)
@@ -93,7 +93,7 @@ namespace P2pClouds {
         unsigned int extraProof = 0;
         
         time_t startTimestamp = getTimeStamp();
-        BlockPtr pLastblock = pBlockchain()->lastBlock();
+        BlockPtr pLastBlock = pBlockchain()->lastBlock();
         BlockPtr pFoundBlock;
         float difficulty = 1.f;
         uint32_t chainSize = pBlockchain()->chainSize();
@@ -106,7 +106,7 @@ namespace P2pClouds {
                 return false;
             }
 
-            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastblock, false);
+            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastBlock, false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
             
             arith_uint256 target;
@@ -172,7 +172,7 @@ namespace P2pClouds {
         LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->index());
         LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
         LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
-        LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2,32)) / hashPower / 60));
+        LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2, 256 - p_difficulty_1_target.bits())) / hashPower / 60));
         LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
         LOG_DEBUG("Difficulty: {} (bits: {})", difficulty, pBlockHeaderPoW->bits);
         LOG_DEBUG("");
