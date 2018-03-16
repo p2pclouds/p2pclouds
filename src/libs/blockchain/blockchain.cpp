@@ -66,11 +66,13 @@ namespace P2pClouds {
 		{
 			if(startIndex == 0 || startIndex == (*rit)->index())
 			{
+				startIndex = 0;
 				if(--index == 0)
         			return (*rit);
 			}
 		}
 
+		LOG_ERROR("not found block! index={}, startIndex={}, chainSize={}", index, startIndex, chainSize());
 		return BlockPtr(NULL);
 	}
 
