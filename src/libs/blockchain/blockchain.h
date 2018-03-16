@@ -20,7 +20,7 @@ namespace P2pClouds {
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
-		BlockPtr getBlock(size_t index);
+		BlockPtr getBlock(size_t index, size_t startIndex);
 
 		typedef std::list< BlockPtr > BlockList;
 		BlockList& chain() {

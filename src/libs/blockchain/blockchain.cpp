@@ -57,14 +57,19 @@ namespace P2pClouds {
 		return chain_.back();
 	}
 
-	BlockPtr Blockchain::getBlock(size_t index)
+	BlockPtr Blockchain::getBlock(size_t index, size_t startIndex)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		BlockList::reverse_iterator rit = chain_.rbegin();
 		for (; rit != chain_.rend(); ++rit)
-			if(--index == 0)
-        		return (*rit);
+		{
+			if(startIndex == 0 || startIndex == (*rit)->index())
+			{
+				if(--index == 0)
+        			return (*rit);
+			}
+		}
 
 		return BlockPtr(NULL);
 	}

@@ -54,7 +54,7 @@ namespace P2pClouds {
 		pBlockchain()->addBlockToChain(pBlock);
 	}
 
-    BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, const uint256_t& hashPrevBlock, bool pushToChain)
+    BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain)
 	{
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
@@ -62,8 +62,8 @@ namespace P2pClouds {
 		pBlock->index(pBlockchain()->chainSize() + 1);
 		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
 		pBlockHeaderPoW->proof = proof;
-		pBlockHeaderPoW->hashPrevBlock = hashPrevBlock.size() ? hashPrevBlock : pBlockchain()->lastBlock()->getHash();
-        pBlockHeaderPoW->bits = (bits == 0 ? getNextWorkTarget(pBlock) : bits);
+		pBlockHeaderPoW->hashPrevBlock = pLastBlock->getHash();
+        pBlockHeaderPoW->bits = (bits == 0 ? getNextWorkTarget(pBlock, pLastBlock) : bits);
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
@@ -106,7 +106,7 @@ namespace P2pClouds {
                 return false;
             }
 
-            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastblock->getHash(), false);
+            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastblock, false);
             BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
             
             arith_uint256 target;
@@ -200,25 +200,24 @@ namespace P2pClouds {
         return true;
     }
 
-    uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock)
+    uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
         if(pBlock->index() < 2016 || pBlock->index() % 2016 != 1)
         {
-            return ((BlockHeaderPoW*)pBlock->pBlockHeader())->bits;
+            return ((BlockHeaderPoW*)pLastBlock->pBlockHeader())->bits;
         }
 
-        return calculateNextWorkTarget(pBlock);
+        return calculateNextWorkTarget(pBlock, pLastBlock);
     }
 
-    uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock)
+    uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(2016);
-        BlockPtr pLastblock = pBlockchain()->lastBlock();
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(2016, pLastBlock->index());
 
-        assert(pFirstBlock.get() && pLastblock.get());
+        assert(pFirstBlock.get() && pLastBlock.get());
 
         BlockHeaderPoW* pFirstBlockHeaderPoW = (BlockHeaderPoW*)pFirstBlock->pBlockHeader();
-        BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastblock->pBlockHeader();
+        BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastBlock->pBlockHeader();
 
         uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimeval() - pFirstBlockHeaderPoW->getTimeval();
         const uint32_t cycleTimestamp = (14 * 24 * 60 * 60);
