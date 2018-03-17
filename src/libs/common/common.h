@@ -303,7 +303,13 @@ namespace P2pClouds {
 	{
 		return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	}
-	
+
+	extern int64_t g_timeOffset;
+	inline time_t getAdjustedTime()
+	{
+		return getSysTime() + g_timeOffset;
+	}
+
     #define P2PCLOUDS_LITTLE_ENDIAN								0
     #define P2PCLOUDS_BIG_ENDIAN								1
 

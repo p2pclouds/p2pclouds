@@ -34,7 +34,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
 		pBlock->index(pBlockchain()->chainSize() + 1);
-		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
+		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = 0;
 		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
         pBlockHeaderPoW->bits = b_difficulty_1_target.getCompact();
@@ -60,7 +60,7 @@ namespace P2pClouds {
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
 		pBlock->index(pBlockchain()->chainSize() + 1);
-		pBlockHeaderPoW->timeval = (uint32_t)getSysTime();
+		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = pLastBlock->getHash();
         pBlockHeaderPoW->bits = (bits == 0 ? getNextWorkTarget(pBlock, pLastBlock) : bits);
