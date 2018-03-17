@@ -99,6 +99,23 @@ namespace P2pClouds {
 		return BlockPtr(NULL);
 	}
 
+	BlockPtr Blockchain::getPrevBlock(BlockPtr pBlock)
+	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+
+		BlockList::reverse_iterator rit = chain_.rbegin();
+		for (; rit != chain_.rend(); ++rit)
+		{
+			if(pBlock->pBlockHeader()->hashPrevBlock == (*rit)->getHash())
+			{
+        		return (*rit);
+			}
+		}
+
+		LOG_ERROR("not found prevBlock! index={}, hashPrevBlock={}", pBlock->index(), pBlock->pBlockHeader()->hashPrevBlock.toString());
+		return BlockPtr(NULL);
+	}
+
     ConsensusPtr Blockchain::pConsensus()
     {
         return pConsensus_;

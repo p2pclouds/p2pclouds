@@ -22,6 +22,9 @@ namespace P2pClouds {
         if(!validTime(pBlockHeader->timeval))
             return false;
 
+        if(!pBlockchain()->getPrevBlock(pBlock))
+            return false;
+    
         return true;
     }
 
@@ -116,6 +119,7 @@ namespace P2pClouds {
 
     bool ConsensusPow::validBlock(BlockPtr pBlock)
     {
+        // check difficulty
         return Consensus::validBlock(pBlock);
     }
 
