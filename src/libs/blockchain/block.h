@@ -10,33 +10,38 @@ namespace P2pClouds {
     class BlockHeader
     {
     public:
-        BlockHeader() {
+		int32_t version;
+		uint256 hashPrevBlock;
+		uint256 hashMerkleRoot;
+		uint32_t timeval;
+
+        BlockHeader()
+			: version(P2PCLOUDS_VERSION)
+			, hashPrevBlock()
+			, hashMerkleRoot()
+			, timeval(0)
+		{
         }
         
         virtual ~BlockHeader()
         {
         }
         
+		int64_t getTimeval() const { return (int64_t)timeval; }
+
         virtual uint256_t getHash() const = 0;
-        virtual void serialize(ByteBuffer& stream) const = 0;
+		
+        virtual void serialize(ByteBuffer& stream) const;
     };
     
     class BlockHeaderPoW : public BlockHeader
 	{
 	public:
-		int32_t version;
-		uint256 hashPrevBlock;
-		uint256 hashMerkleRoot;
-		uint32_t timeval;
 		uint32_t bits;
 		uint32_t proof;
 
 		BlockHeaderPoW()
 			: BlockHeader()
-            , version(P2PCLOUDS_VERSION)
-			, hashPrevBlock()
-			, hashMerkleRoot()
-			, timeval(0)
 			, bits(0)
 			, proof(0)
 
@@ -47,7 +52,6 @@ namespace P2pClouds {
         {
         }
         
-		int64_t getTimeval() const { return (int64_t)timeval; }
 		uint256_t getHash() const override;
         void serialize(ByteBuffer& stream) const override;
 	};

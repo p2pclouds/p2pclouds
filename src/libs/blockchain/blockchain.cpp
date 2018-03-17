@@ -40,6 +40,25 @@ namespace P2pClouds {
 		return true;
 	}
 
+	time_t Blockchain::getMedianBlockTimePastInChain(size_t range)
+	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+		std::vector<time_t> blockTimes;
+
+		BlockList::reverse_iterator rit = chain_.rbegin();
+		for (; rit != chain_.rend(); ++rit)
+		{
+        	blockTimes.push_back((*rit)->pBlockHeader()->getTimeval());
+
+			if(blockTimes.size() == range)
+				break;
+		}
+
+		std::sort(blockTimes.begin(), blockTimes.end(), std::less<time_t>());
+
+		return blockTimes[blockTimes.size() / 2];
+	}
+
 	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);

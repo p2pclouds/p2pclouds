@@ -98,7 +98,18 @@ namespace P2pClouds {
 
     bool ConsensusPow::validTime(time_t timeval)
     {
-        // 
+        if (timeval > getAdjustedTime() + 2 * 60 * 60)
+        {
+            LOG_ERROR("Illegal timeval({}), not conforming to adjustedTime({})!", timeval, getAdjustedTime());
+            return false;
+        }
+
+        time_t medianTime = pBlockchain()->getMedianBlockTimePastInChain();
+        if(timeval < medianTime)
+        {
+            LOG_ERROR("Illegal timeval({}), not conforming to medianTime({})!", timeval, medianTime);
+            return false;
+        }
 
         return true;
     }

@@ -43,6 +43,8 @@ namespace P2pClouds {
         
 		bool start(int numThreads = std::thread::hardware_concurrency());
 
+		time_t getMedianBlockTimePastInChain(size_t range = 11);
+
 	protected:
 		BlockList chain_;
 		uint32_t chainSize_;
