@@ -8,7 +8,7 @@ namespace P2pClouds {
 		: sender_()
 		, recipient_()
 		, amount_(0)
-		, proof_(0)
+		, magic_(0)
 	{
 	}
 
@@ -19,7 +19,7 @@ namespace P2pClouds {
 	uint256_t Transaction::getHash() const
 	{
 		ByteBuffer stream;
-		stream << sender_ << recipient_ << amount_ << proof_;
+		stream << sender_ << recipient_ << amount_ << magic_;
 
         uint256_t hash2561;
         SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);

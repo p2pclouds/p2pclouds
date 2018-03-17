@@ -15,6 +15,34 @@ namespace P2pClouds {
 	{
 	}
 
+    bool Consensus::validBlock(BlockPtr pBlock)
+    {
+        BlockHeader* pBlockHeader = (BlockHeader*)pBlock->pBlockHeader();
+
+        if(!validTime(pBlockHeader->timeval))
+            return false;
+
+        return true;
+    }
+
+    bool Consensus::validTime(time_t timeval)
+    {
+        if (timeval > getAdjustedTime() + 2 * 60 * 60)
+        {
+            LOG_ERROR("Illegal timeval({}), not conforming to adjustedTime({})!", timeval, getAdjustedTime());
+            return false;
+        }
+
+        time_t medianTime = pBlockchain()->getMedianBlockTimePastInChain();
+        if(timeval < medianTime)
+        {
+            LOG_ERROR("Illegal timeval({}), not conforming to medianTime({})!", timeval, medianTime);
+            return false;
+        }
+
+        return true;
+    }
+
     arith_uint256 ConsensusPow::p_difficulty_1_target("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     arith_uint256 ConsensusPow::b_difficulty_1_target("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
     
@@ -44,7 +72,7 @@ namespace P2pClouds {
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
-		pBaseTransaction->proof(0);
+		pBaseTransaction->magic(0);
 		pBaseTransaction->amount(0);
 		pBaseTransaction->recipient("0");
 		pBaseTransaction->sender("0");
@@ -70,9 +98,9 @@ namespace P2pClouds {
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
-		pBaseTransaction->proof(extraProof);
+		pBaseTransaction->magic(extraProof);
 		pBaseTransaction->amount(0);
-		pBaseTransaction->recipient("0");
+		pBaseTransaction->recipient(pBlockchain()->userHash());
 		pBaseTransaction->sender("0");
 		pBlock->transactions().push_back(pBaseTransaction);
 
@@ -88,30 +116,12 @@ namespace P2pClouds {
 
     bool ConsensusPow::validBlock(BlockPtr pBlock)
     {
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
-
-        if(!validTime(pBlockHeaderPoW->timeval))
-            return false;
-
-        return true;
+        return Consensus::validBlock(pBlock);
     }
 
     bool ConsensusPow::validTime(time_t timeval)
     {
-        if (timeval > getAdjustedTime() + 2 * 60 * 60)
-        {
-            LOG_ERROR("Illegal timeval({}), not conforming to adjustedTime({})!", timeval, getAdjustedTime());
-            return false;
-        }
-
-        time_t medianTime = pBlockchain()->getMedianBlockTimePastInChain();
-        if(timeval < medianTime)
-        {
-            LOG_ERROR("Illegal timeval({}), not conforming to medianTime({})!", timeval, medianTime);
-            return false;
-        }
-
-        return true;
+        return Consensus::validTime(timeval);
     }
 
     bool ConsensusPow::build()

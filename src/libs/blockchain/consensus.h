@@ -16,8 +16,8 @@ namespace P2pClouds {
 		virtual ~Consensus();
 
         virtual bool build() = 0;
-        virtual bool validBlock(BlockPtr pBlock) = 0;
-        virtual bool validTime(time_t timeval) = 0;
+        virtual bool validBlock(BlockPtr pBlock);
+        virtual bool validTime(time_t timeval);
 
         Blockchain* pBlockchain() const {
             return pBlockchain_;

@@ -34,12 +34,12 @@ namespace P2pClouds {
 			return amount_;
 		}
 
-		void proof(uint32_t val) {
-			proof_ = val;
+		void magic(uint32_t val) {
+			magic_ = val;
 		}
 
-		uint32_t proof() const {
-			return proof_;
+		uint32_t magic() const {
+			return magic_;
 		}
 
 		uint256_t getHash() const;
@@ -48,7 +48,7 @@ namespace P2pClouds {
 		std::string sender_;
 		std::string recipient_;
 		uint32_t amount_;
-		uint32_t proof_;
+		uint32_t magic_;
 	};
 
 	typedef std::shared_ptr<Transaction> TransactionPtr;

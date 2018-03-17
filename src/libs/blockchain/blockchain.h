@@ -45,6 +45,9 @@ namespace P2pClouds {
 
 		time_t getMedianBlockTimePastInChain(size_t range = 11);
 
+		std::string userHash() const {
+			return userHash_;
+		}
 	protected:
 		BlockList chain_;
 		uint32_t chainSize_;
@@ -54,6 +57,8 @@ namespace P2pClouds {
 
         ThreadPool< ThreadContex >* pThreadPool_;
         std::recursive_mutex mutex_;
+
+		std::string userHash_;
 	};
 
 }
