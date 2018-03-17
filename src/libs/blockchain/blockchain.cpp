@@ -21,11 +21,14 @@ namespace P2pClouds {
         SAFE_RELEASE(pThreadPool_);
 	}
 
-	bool Blockchain::addBlockToChain(BlockPtr& pBlock)
+	bool Blockchain::addBlockToChain(BlockPtr pBlock)
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		if(pBlock->index() != (chainSize_ + 1))
+			return false;
+
+		if(pConsensus_ && !pConsensus_->validBlock(pBlock))
 			return false;
 
 		chain_.push_back(pBlock);

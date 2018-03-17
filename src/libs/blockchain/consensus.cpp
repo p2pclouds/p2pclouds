@@ -30,10 +30,13 @@ namespace P2pClouds {
     
     void ConsensusPow::createGenesisBlock()
 	{
+        if(pBlockchain()->chainSize() > 0)
+            return;
+
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
-		pBlock->index(pBlockchain()->chainSize() + 1);
+		pBlock->index(1);
 		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = 0;
 		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
@@ -83,10 +86,27 @@ namespace P2pClouds {
 		return pBlock;
 	}
 
+    bool ConsensusPow::validBlock(BlockPtr pBlock)
+    {
+        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+
+        if(!validTime(pBlockHeaderPoW->timeval))
+            return false;
+
+        return true;
+    }
+
+    bool ConsensusPow::validTime(time_t timeval)
+    {
+        // 
+
+        return true;
+    }
+
     bool ConsensusPow::build()
     {
         LOG_DEBUG("Starting build...");
-        
+
         const int innerLoopCount = 0x10000;
         uint64_t maxTries = pow(2, 32) - 1;
         uint64_t tries = 0;

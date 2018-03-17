@@ -37,7 +37,7 @@ namespace P2pClouds {
 			return currentTransactions_;
 		}
 
-		bool addBlockToChain(BlockPtr& pBlock);
+		bool addBlockToChain(BlockPtr pBlock);
 
         ConsensusPtr pConsensus();
         

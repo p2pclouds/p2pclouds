@@ -16,7 +16,9 @@ namespace P2pClouds {
 		virtual ~Consensus();
 
         virtual bool build() = 0;
-        
+        virtual bool validBlock(BlockPtr pBlock) = 0;
+        virtual bool validTime(time_t timeval) = 0;
+
         Blockchain* pBlockchain() const {
             return pBlockchain_;
         }
@@ -36,6 +38,8 @@ namespace P2pClouds {
         virtual ~ConsensusPow();
         
         bool build() override;
+        bool validBlock(BlockPtr pBlock) override;
+        bool validTime(time_t timeval) override;
         bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
         
     	void createGenesisBlock();
