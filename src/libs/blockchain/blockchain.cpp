@@ -80,7 +80,7 @@ namespace P2pClouds {
 		return chain_.back();
 	}
 
-	BlockPtr Blockchain::getBlock(size_t blockIndex, size_t startblockIndex)
+	BlockPtr Blockchain::getBlock(size_t startblockIndex, size_t blockOffsetIndex)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
@@ -90,12 +90,12 @@ namespace P2pClouds {
 			if(startblockIndex == 0 || startblockIndex == (*rit)->index())
 			{
 				startblockIndex = 0;
-				if(--blockIndex == 0)
+				if(blockOffsetIndex == 0 || --blockOffsetIndex == 0)
         			return (*rit);
 			}
 		}
 
-		LOG_ERROR("not found block! blockIndex={}, startblockIndex={}, chainSize={}", blockIndex, startblockIndex, chainSize());
+		LOG_ERROR("not found block! startblockIndex={}, blockOffsetIndex={}, chainSize={}", startblockIndex, blockOffsetIndex, chainSize());
 		return BlockPtr(NULL);
 	}
 

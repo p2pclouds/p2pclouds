@@ -20,7 +20,7 @@ namespace P2pClouds {
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
-		BlockPtr getBlock(size_t blockIndex, size_t startblockIndex);
+		BlockPtr getBlock(size_t startblockIndex, size_t blockOffsetIndex);
 		BlockPtr getPrevBlock(BlockPtr pBlock);
 
 		time_t getMedianBlockTimePastInChain(size_t range = 11);
@@ -52,6 +52,10 @@ namespace P2pClouds {
 			return userHash_;
 		}
 	
+		std::recursive_mutex& mutex() {
+			return mutex_;
+		}
+
 	protected:
 		BlockList chain_;
 		uint32_t chainSize_;

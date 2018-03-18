@@ -119,7 +119,13 @@ namespace P2pClouds {
 
     bool ConsensusPow::validBlock(BlockPtr pBlock)
     {
-        // check difficulty
+        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+        if(getWorkTarget(pBlock) != pBlockHeaderPoW->bits)
+        {
+            LOG_ERROR("Difficulty mismatch! Block({}) != {})", pBlockHeaderPoW->bits, getWorkTarget(pBlock));
+            return false;
+        }
+
         return Consensus::validBlock(pBlock);
     }
 
@@ -245,6 +251,18 @@ namespace P2pClouds {
         return true;
     }
 
+    uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
+    {
+        if(pBlock->index() % 2016 != 1)
+        {
+            BlockPtr pPrevBlock = pBlockchain()->getPrevBlock(pBlock);
+            if(!pPrevBlock)
+                return 0;
+        }
+        
+        return getNextWorkTarget(pBlock, pBlockchain()->getPrevBlock(pBlock));
+    }
+
     uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
         if(pBlock->index() < 2016 || pBlock->index() % 2016 != 1)
@@ -257,7 +275,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(2016, pLastBlock->index());
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->index(), 2016);
 
         assert(pFirstBlock.get() && pLastBlock.get());
 
