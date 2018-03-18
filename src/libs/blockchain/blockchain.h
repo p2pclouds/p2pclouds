@@ -20,7 +20,7 @@ namespace P2pClouds {
 		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
 
 		BlockPtr lastBlock();
-		BlockPtr getBlock(size_t index, size_t startIndex);
+		BlockPtr getBlock(size_t blockIndex, size_t startblockIndex);
 		BlockPtr getPrevBlock(BlockPtr pBlock);
 
 		time_t getMedianBlockTimePastInChain(size_t range = 11);
