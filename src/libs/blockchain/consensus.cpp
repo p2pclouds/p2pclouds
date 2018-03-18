@@ -19,7 +19,7 @@ namespace P2pClouds {
     {
         BlockHeader* pBlockHeader = (BlockHeader*)pBlock->pBlockHeader();
 
-        if(!validTime(pBlockHeader->timeval))
+        if(!validBlockTime(pBlockHeader->timeval))
             return false;
 
         if(!pBlockchain()->getPrevBlock(pBlock))
@@ -28,7 +28,7 @@ namespace P2pClouds {
         return true;
     }
 
-    bool Consensus::validTime(time_t timeval)
+    bool Consensus::validBlockTime(time_t timeval)
     {
         if (timeval > getAdjustedTime() + 2 * 60 * 60)
         {
@@ -123,9 +123,9 @@ namespace P2pClouds {
         return Consensus::validBlock(pBlock);
     }
 
-    bool ConsensusPow::validTime(time_t timeval)
+    bool ConsensusPow::validBlockTime(time_t timeval)
     {
-        return Consensus::validTime(timeval);
+        return Consensus::validBlockTime(timeval);
     }
 
     bool ConsensusPow::build()

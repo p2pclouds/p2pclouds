@@ -17,7 +17,7 @@ namespace P2pClouds {
 
         virtual bool build() = 0;
         virtual bool validBlock(BlockPtr pBlock);
-        virtual bool validTime(time_t timeval);
+        virtual bool validBlockTime(time_t timeval);
 
         Blockchain* pBlockchain() const {
             return pBlockchain_;
@@ -39,7 +39,7 @@ namespace P2pClouds {
         
         bool build() override;
         bool validBlock(BlockPtr pBlock) override;
-        bool validTime(time_t timeval) override;
+        bool validBlockTime(time_t timeval) override;
         bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
         
     	void createGenesisBlock();
