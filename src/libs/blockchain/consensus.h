@@ -32,6 +32,8 @@ namespace P2pClouds {
     public:
         static arith_uint256 p_difficulty_1_target;
         static arith_uint256 b_difficulty_1_target;
+        static uint32_t cycleBlockSize;
+        static uint32_t cycleTimestamp;
         
     public:
         ConsensusPow(Blockchain* pBlockchain);
@@ -47,6 +49,7 @@ namespace P2pClouds {
 		BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain = true);
 
         uint32_t getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
+        uint32_t getWorkTarget(BlockPtr pBlock);
         uint32_t calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
 
     protected:

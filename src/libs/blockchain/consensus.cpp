@@ -48,7 +48,9 @@ namespace P2pClouds {
 
     arith_uint256 ConsensusPow::p_difficulty_1_target("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     arith_uint256 ConsensusPow::b_difficulty_1_target("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
-    
+    uint32_t ConsensusPow::cycleBlockSize = 2016;
+    uint32_t ConsensusPow::cycleTimestamp = (14 * 24 * 60 * 60);
+
     ConsensusPow::ConsensusPow(Blockchain* pBlockchain)
     : Consensus(pBlockchain)
     {
@@ -253,7 +255,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
     {
-        if(pBlock->index() % 2016 != 1)
+        if(pBlock->index() % ConsensusPow::cycleBlockSize != 1)
         {
             BlockPtr pPrevBlock = pBlockchain()->getPrevBlock(pBlock);
             if(!pPrevBlock)
@@ -265,7 +267,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        if(pBlock->index() < 2016 || pBlock->index() % 2016 != 1)
+        if(pBlock->index() < ConsensusPow::cycleBlockSize || pBlock->index() % ConsensusPow::cycleBlockSize != 1)
         {
             return ((BlockHeaderPoW*)pLastBlock->pBlockHeader())->bits;
         }
@@ -275,7 +277,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->index(), 2016);
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->index(), ConsensusPow::cycleBlockSize);
 
         assert(pFirstBlock.get() && pLastBlock.get());
 
@@ -283,13 +285,12 @@ namespace P2pClouds {
         BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastBlock->pBlockHeader();
 
         uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimeval() - pFirstBlockHeaderPoW->getTimeval();
-        const uint32_t cycleTimestamp = (14 * 24 * 60 * 60);
 
-        if (diffTimestamp < cycleTimestamp / 4)
-            diffTimestamp = cycleTimestamp / 4;
+        if (diffTimestamp < ConsensusPow::cycleTimestamp / 4)
+            diffTimestamp = ConsensusPow::cycleTimestamp / 4;
 
-        if (diffTimestamp > cycleTimestamp * 4)
-            diffTimestamp = cycleTimestamp * 4;
+        if (diffTimestamp > ConsensusPow::cycleTimestamp * 4)
+            diffTimestamp = ConsensusPow::cycleTimestamp * 4;
 
         arith_uint256 bnNew;
         bnNew.setCompact(pLastBlockHeaderPoW->bits);
