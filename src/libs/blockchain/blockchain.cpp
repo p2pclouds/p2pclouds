@@ -13,6 +13,7 @@ namespace P2pClouds {
         , pThreadPool_(NULL)
         , mutex_()
 		, userHash_()
+		, userGas_(0)
 	{
         pConsensus_ = std::shared_ptr<Consensus>(new ConsensusPow(this));
 	}

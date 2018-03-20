@@ -52,9 +52,14 @@ namespace P2pClouds {
 			return userHash_;
 		}
 	
+		uint64_t userGas() const {
+			return userGas_;
+		}
+		
 		std::recursive_mutex& mutex() {
 			return mutex_;
 		}
+
 
 	protected:
 		BlockList chain_;
@@ -67,6 +72,7 @@ namespace P2pClouds {
         std::recursive_mutex mutex_;
 
 		std::string userHash_;
+		uint64_t userGas_;
 	};
 
 }

@@ -106,7 +106,7 @@ namespace P2pClouds {
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
 		pBaseTransaction->magic(extraProof);
-		pBaseTransaction->value(calculateSubsidyValue(pBlock->height()));
+		pBaseTransaction->value(calculateSubsidyValue(pBlock->height()) - pBlockchain()->userGas());
 		pBaseTransaction->recipient(pBlockchain()->userHash());
 		pBaseTransaction->sender("0");
 		pBlock->transactions().push_back(pBaseTransaction);
