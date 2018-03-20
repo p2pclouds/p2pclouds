@@ -17,10 +17,10 @@ namespace P2pClouds {
 		Blockchain();
 		virtual ~Blockchain();
 
-		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount);
+		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value);
 
 		BlockPtr lastBlock();
-		BlockPtr getBlock(size_t startblockIndex, size_t blockOffsetIndex);
+		BlockPtr getBlock(size_t startBlockHeight, size_t blockOffsetHeight);
 		BlockPtr getPrevBlock(BlockPtr pBlock);
 
 		time_t getMedianBlockTimePastInChain(size_t range = 11);
@@ -34,8 +34,8 @@ namespace P2pClouds {
 			return chain_;
 		}
 
-		uint32_t chainSize() const {
-			return chainSize_;
+		uint32_t chainHeight() const {
+			return chainHeight_;
 		}
 
 		std::vector< TransactionPtr >& currentTransactions() 
@@ -58,7 +58,7 @@ namespace P2pClouds {
 
 	protected:
 		BlockList chain_;
-		uint32_t chainSize_;
+		uint32_t chainHeight_;
 
         ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;

@@ -7,7 +7,7 @@ namespace P2pClouds {
 
 	Blockchain::Blockchain()
 		: chain_()
-		, chainSize_(0)
+		, chainHeight_(0)
         , pConsensus_()
 		, currentTransactions_()
         , pThreadPool_(NULL)
@@ -26,14 +26,14 @@ namespace P2pClouds {
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
-		if(pBlock->index() != (chainSize_ + 1))
+		if(pBlock->height() != (chainHeight_ + 1))
 			return false;
 
 		if(pConsensus_ && !pConsensus_->validBlock(pBlock))
 			return false;
 
 		chain_.push_back(pBlock);
-		++chainSize_;
+		++chainHeight_;
 
 		currentTransactions_.erase(currentTransactions_.begin(), 
 			currentTransactions_.begin() + (pBlock->transactions().size() - 1));
@@ -60,18 +60,18 @@ namespace P2pClouds {
 		return blockTimes[blockTimes.size() / 2];
 	}
 
-	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t amount)
+	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		TransactionPtr pTransaction = std::make_shared<Transaction>();
-		pTransaction->amount(amount);
+		pTransaction->value(value);
 		pTransaction->recipient(recipient);
 		pTransaction->sender(sender);
 
         currentTransactions_.push_back(pTransaction);
 
-		return chainSize() > 0 ? (lastBlock()->index() + 1) : 0;
+		return chainHeight() > 0 ? (lastBlock()->height() + 1) : 0;
 	}
 
 	BlockPtr Blockchain::lastBlock()
@@ -80,22 +80,24 @@ namespace P2pClouds {
 		return chain_.back();
 	}
 
-	BlockPtr Blockchain::getBlock(size_t startblockIndex, size_t blockOffsetIndex)
+	BlockPtr Blockchain::getBlock(size_t startBlockHeight, size_t blockOffsetHeight)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		BlockList::reverse_iterator rit = chain_.rbegin();
 		for (; rit != chain_.rend(); ++rit)
 		{
-			if(startblockIndex == 0 || startblockIndex == (*rit)->index())
+			if(startBlockHeight == 0 || startBlockHeight == (*rit)->height())
 			{
-				startblockIndex = 0;
-				if(blockOffsetIndex == 0 || --blockOffsetIndex == 0)
+				startBlockHeight = 0;
+				if(blockOffsetHeight == 0 || --blockOffsetHeight == 0)
         			return (*rit);
 			}
 		}
 
-		LOG_ERROR("not found block! startblockIndex={}, blockOffsetIndex={}, chainSize={}", startblockIndex, blockOffsetIndex, chainSize());
+		LOG_ERROR("not found block! startBlockHeight={}, blockOffsetHeight={}, chainHeight={}", 
+			startBlockHeight, blockOffsetHeight, chainHeight());
+
 		return BlockPtr(NULL);
 	}
 
@@ -112,7 +114,9 @@ namespace P2pClouds {
 			}
 		}
 
-		LOG_ERROR("not found prevBlock! index={}, hashPrevBlock={}", pBlock->index(), pBlock->pBlockHeader()->hashPrevBlock.toString());
+		LOG_ERROR("not found prevBlock! height={}, hashPrevBlock={}", pBlock->height(), 
+			pBlock->pBlockHeader()->hashPrevBlock.toString());
+
 		return BlockPtr(NULL);
 	}
 

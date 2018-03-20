@@ -34,7 +34,7 @@ namespace P2pClouds {
     }
     
 	Block::Block()
-		: index_(0)
+		: height_(0)
 		, transactions_()
         , pBlockHeader_(new BlockHeaderPoW())
 	{

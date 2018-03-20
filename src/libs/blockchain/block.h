@@ -62,7 +62,7 @@ namespace P2pClouds {
 		Block();
 
 		Block(BlockHeader* pBlockHeader)
-			: index_(0)
+			: height_(0)
 			, transactions_()
             , pBlockHeader_(pBlockHeader)
 		{
@@ -84,12 +84,12 @@ namespace P2pClouds {
 			return transactions_;
 		}
 
-		void index(uint32_t val) {
-			index_ = val;
+		void height(uint32_t val) {
+			height_ = val;
 		}
 
-		uint32_t index() const {
-			return index_;
+		uint32_t height() const {
+			return height_;
 		}
 
 		BlockHeader* pBlockHeader()
@@ -102,7 +102,7 @@ namespace P2pClouds {
         }
         
 	protected:
-		uint32_t index_;
+		uint32_t height_;
 		TRANSACTIONS transactions_;
         BlockHeader* pBlockHeader_;
 	};

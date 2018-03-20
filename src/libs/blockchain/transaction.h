@@ -26,12 +26,12 @@ namespace P2pClouds {
 			return recipient_;
 		}
 
-		void amount(uint32_t val) {
-			amount_ = val;
+		void value(uint32_t val) {
+			value_ = val;
 		}
 
-		uint32_t amount() const {
-			return amount_;
+		uint32_t value() const {
+			return value_;
 		}
 
 		void magic(uint32_t val) {
@@ -47,7 +47,7 @@ namespace P2pClouds {
 	protected:
 		std::string sender_;
 		std::string recipient_;
-		uint32_t amount_;
+		uint32_t value_;
 		uint32_t magic_;
 	};
 

@@ -50,6 +50,8 @@ namespace P2pClouds {
     arith_uint256 ConsensusPow::b_difficulty_1_target("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
     uint32_t ConsensusPow::cycleBlockSize = 2016;
     uint32_t ConsensusPow::cycleTimestamp = (14 * 24 * 60 * 60);
+    uint32_t ConsensusPow::subsidyHalvingInterval = 210000;
+    uint32_t ConsensusPow::valueUnit = 100000000;
 
     ConsensusPow::ConsensusPow(Blockchain* pBlockchain)
     : Consensus(pBlockchain)
@@ -63,13 +65,13 @@ namespace P2pClouds {
     
     void ConsensusPow::createGenesisBlock()
 	{
-        if(pBlockchain()->chainSize() > 0)
+        if(pBlockchain()->chainHeight() > 0)
             return;
 
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
-		pBlock->index(1);
+		pBlock->height(1);
 		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = 0;
 		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
@@ -78,7 +80,7 @@ namespace P2pClouds {
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
 		pBaseTransaction->magic(0);
-		pBaseTransaction->amount(0);
+		pBaseTransaction->value(0);
 		pBaseTransaction->recipient("0");
 		pBaseTransaction->sender("0");
 		pBlock->transactions().push_back(pBaseTransaction);
@@ -95,7 +97,7 @@ namespace P2pClouds {
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
-		pBlock->index(pBlockchain()->chainSize() + 1);
+		pBlock->height(pBlockchain()->chainHeight() + 1);
 		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = proof;
 		pBlockHeaderPoW->hashPrevBlock = pLastBlock->getHash();
@@ -104,7 +106,7 @@ namespace P2pClouds {
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
 		pBaseTransaction->magic(extraProof);
-		pBaseTransaction->amount(0);
+		pBaseTransaction->value(calculateSubsidy(pBlock->height()));
 		pBaseTransaction->recipient(pBlockchain()->userHash());
 		pBaseTransaction->sender("0");
 		pBlock->transactions().push_back(pBaseTransaction);
@@ -149,13 +151,13 @@ namespace P2pClouds {
         BlockPtr pLastBlock = pBlockchain()->lastBlock();
         BlockPtr pFoundBlock;
         float difficulty = 1.f;
-        uint32_t chainSize = pBlockchain()->chainSize();
+        uint32_t chainHeight = pBlockchain()->chainHeight();
 
         while (true)
         {
-            if(chainSize != pBlockchain()->chainSize())
+            if(chainHeight != pBlockchain()->chainHeight())
             {
-                LOG_DEBUG("chainSize({}) != currchainSize({}), build canceled!", chainSize, pBlockchain()->chainSize());
+                LOG_DEBUG("chainSize({}) != currchainHeight({}), build canceled!", chainHeight, pBlockchain()->chainHeight());
                 return false;
             }
 
@@ -222,7 +224,7 @@ namespace P2pClouds {
         if(!pBlockchain()->addBlockToChain(pFoundBlock))
             return false;
         
-        LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->index());
+        LOG_DEBUG("Success with proof: {}, chainHeight:{}", proof, pFoundBlock->height());
         LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
         LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
         LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2, 256 - p_difficulty_1_target.bits())) / hashPower / 60));
@@ -255,7 +257,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
     {
-        if(pBlock->index() % ConsensusPow::cycleBlockSize != 1)
+        if(pBlock->height() % ConsensusPow::cycleBlockSize != 1)
         {
             BlockPtr pPrevBlock = pBlockchain()->getPrevBlock(pBlock);
             if(!pPrevBlock)
@@ -267,7 +269,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        if(pBlock->index() < ConsensusPow::cycleBlockSize || pBlock->index() % ConsensusPow::cycleBlockSize != 1)
+        if(pBlock->height() < ConsensusPow::cycleBlockSize || pBlock->height() % ConsensusPow::cycleBlockSize != 1)
         {
             return ((BlockHeaderPoW*)pLastBlock->pBlockHeader())->bits;
         }
@@ -277,7 +279,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->index(), ConsensusPow::cycleBlockSize);
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->height(), ConsensusPow::cycleBlockSize);
 
         assert(pFirstBlock.get() && pLastBlock.get());
 
@@ -302,5 +304,20 @@ namespace P2pClouds {
             bnNew = p_difficulty_1_target;
 
         return bnNew.getCompact();
+    }
+
+    uint32_t ConsensusPow::calculateSubsidy(uint32_t blockHeight)
+    {
+        int halvings = blockHeight / subsidyHalvingInterval;
+
+        // Force block reward to zero when right shift is undefined.
+        if (halvings >= 64)
+            return 0;
+
+        uint32_t nSubsidy = 50 * valueUnit;
+
+        // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
+        nSubsidy >>= halvings;
+        return nSubsidy;
     }
 }
