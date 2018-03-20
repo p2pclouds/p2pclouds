@@ -36,7 +36,7 @@ namespace P2pClouds {
 		++chainSize_;
 
 		currentTransactions_.erase(currentTransactions_.begin(), 
-			currentTransactions_.begin() + pBlock->transactions().size() - 1);
+			currentTransactions_.begin() + (pBlock->transactions().size() - 1));
 
 		return true;
 	}
