@@ -32,10 +32,10 @@ namespace P2pClouds {
     public:
         static arith_uint256 p_difficulty_1_target;
         static arith_uint256 b_difficulty_1_target;
-        static uint32_t cycleBlockSize;
+        static uint32_t cycleBlockHeight;
         static uint32_t cycleTimestamp;
         static uint32_t subsidyHalvingInterval;
-        static uint32_t valueUnit;
+        static uint64_t valueUnit;
 
     public:
         ConsensusPow(Blockchain* pBlockchain);
@@ -53,7 +53,7 @@ namespace P2pClouds {
         uint32_t getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
         uint32_t getWorkTarget(BlockPtr pBlock);
         uint32_t calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
-        uint32_t calculateSubsidy(uint32_t blockHeight);
+        uint64_t calculateSubsidyValue(uint32_t blockHeight);
 
     protected:
     };

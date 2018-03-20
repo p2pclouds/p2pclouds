@@ -26,11 +26,11 @@ namespace P2pClouds {
 			return recipient_;
 		}
 
-		void value(uint32_t val) {
+		void value(uint64_t val) {
 			value_ = val;
 		}
 
-		uint32_t value() const {
+		uint64_t value() const {
 			return value_;
 		}
 
@@ -47,7 +47,7 @@ namespace P2pClouds {
 	protected:
 		std::string sender_;
 		std::string recipient_;
-		uint32_t value_;
+		uint64_t value_;
 		uint32_t magic_;
 	};
 
