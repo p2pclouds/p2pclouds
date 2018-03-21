@@ -19,14 +19,14 @@ INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/libs
   ${PROJECT_SOURCE_DIR}/deps/utf8cpp
   ${PROJECT_SOURCE_DIR}/deps/kcp
-  ${PROJECT_SOURCE_DIR}/deps/asio-1.10.8/include
+  ${PROJECT_SOURCE_DIR}/deps/asio-1.11.0/include
   ${CMAKE_CURRENT_BINARY_DIR}/deps/gflags-2.2.0/include
   ${PROJECT_SOURCE_DIR}/deps/spdlog-0.16.3/include
 )
 
 # lib directories
 LINK_DIRECTORIES(
-  ${PROJECT_SOURCE_DIR}/deps/asio-1.10.8
+  ${PROJECT_SOURCE_DIR}/deps/asio-1.11.0
   ${CMAKE_CURRENT_BINARY_DIR}/lib/
 )
 
@@ -57,7 +57,7 @@ ADD_DEFINITIONS(-DLOG_TO_CONSOLE) # log required
 # add subdirectory
 add_subdirectory(deps/gflags-2.2.0)
 add_subdirectory(deps/kcp)
-add_subdirectory(deps/asio-1.10.8)
+add_subdirectory(deps/asio-1.11.0)
 add_subdirectory(deps/openssl)
 
 INCLUDE_DIRECTORIES(
