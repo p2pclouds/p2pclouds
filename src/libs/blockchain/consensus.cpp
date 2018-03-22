@@ -6,8 +6,35 @@
 
 namespace P2pClouds {
     
-	Consensus::Consensus(Blockchain* pBlockchain)
-    : pBlockchain_(pBlockchain)
+	ConsensusArgsPtr ConsensusArgs::create(ARGS_TYPE type)
+	{
+		ConsensusArgsPtr pArgs = std::make_shared<ConsensusArgs>();
+
+		if (type == NORMAL)
+		{
+			pArgs->p_difficulty_1_target = arith_uint256("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+			pArgs->b_difficulty_1_target = arith_uint256("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
+			pArgs->cycleBlockHeight = 2016;
+			pArgs->cycleTimestamp = (14 * 24 * 60 * 60);
+			pArgs->subsidyHalvingInterval = 210000;
+			pArgs->valueUnit = 100000000;
+		}
+		else if (type == TEST)
+		{
+			pArgs->p_difficulty_1_target = arith_uint256("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+			pArgs->b_difficulty_1_target = arith_uint256("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
+			pArgs->cycleBlockHeight = 2016;
+			pArgs->cycleTimestamp = (14 * 24 * 60 * 60);
+			pArgs->subsidyHalvingInterval = 210000;
+			pArgs->valueUnit = 100000000;
+		}
+
+		return pArgs;
+	}
+
+	Consensus::Consensus(Blockchain* pBlockchain, ConsensusArgsPtr args)
+    : pConsensusArgs_(args)
+	, pBlockchain_(pBlockchain)
 	{
 	}
 
@@ -46,15 +73,8 @@ namespace P2pClouds {
         return true;
     }
 
-    arith_uint256 ConsensusPow::p_difficulty_1_target("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-    arith_uint256 ConsensusPow::b_difficulty_1_target("0x0000FFFF00000000000000000000000000000000000000000000000000000000");
-    uint32_t ConsensusPow::cycleBlockHeight = 2016;
-    uint32_t ConsensusPow::cycleTimestamp = (14 * 24 * 60 * 60);
-    uint32_t ConsensusPow::subsidyHalvingInterval = 210000;
-    uint64_t ConsensusPow::valueUnit = 100000000;
-
-    ConsensusPow::ConsensusPow(Blockchain* pBlockchain)
-    : Consensus(pBlockchain)
+    ConsensusPow::ConsensusPow(Blockchain* pBlockchain, ConsensusArgsPtr args)
+    : Consensus(pBlockchain, args)
     {
         createGenesisBlock();
     }
@@ -75,7 +95,7 @@ namespace P2pClouds {
 		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = 0;
 		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
-        pBlockHeaderPoW->bits = b_difficulty_1_target.getCompact();
+        pBlockHeaderPoW->bits = pConsensusArgs_->b_difficulty_1_target.getCompact();
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
@@ -140,7 +160,7 @@ namespace P2pClouds {
 
     bool ConsensusPow::build()
     {
-        LOG_DEBUG("Starting build...");
+        //LOG_DEBUG("Starting build...");
 
         const int innerLoopCount = 0x10000;
         uint64_t maxTries = pow(2, 32) - 1;
@@ -157,7 +177,7 @@ namespace P2pClouds {
         {
             if(chainHeight != pBlockchain()->chainHeight())
             {
-                LOG_DEBUG("chainSize({}) != currchainHeight({}), build canceled!", chainHeight, pBlockchain()->chainHeight());
+                //LOG_DEBUG("chainSize({}) != currchainHeight({}), build canceled!", chainHeight, pBlockchain()->chainHeight());
                 return false;
             }
 
@@ -167,7 +187,7 @@ namespace P2pClouds {
             arith_uint256 target;
             target.setCompact(pBlockHeaderPoW->bits);
             
-            difficulty = (float)(b_difficulty_1_target / target).getdouble();
+            difficulty = (float)(pConsensusArgs_->b_difficulty_1_target / target).getdouble();
             
             ByteBuffer stream;
             pBlockHeaderPoW->serialize(stream);
@@ -224,13 +244,15 @@ namespace P2pClouds {
         if(!pBlockchain()->addBlockToChain(pFoundBlock))
             return false;
         
-        LOG_DEBUG("Success with proof: {}, chainHeight:{}, rewardValue:{}", proof, pFoundBlock->height(), (pFoundBlock->transactions()[0]->value() / valueUnit));
-        LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
+        LOG_DEBUG("Success with proof: {}", proof);
+		LOG_DEBUG("chainHeight:{}, rewardValue:{}", pFoundBlock->height(), (pFoundBlock->transactions()[0]->value() / pConsensusArgs_->valueUnit));
         LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
-        LOG_DEBUG("Current thread finds a hash need {} Minutes", ((difficulty * pow(2, 256 - p_difficulty_1_target.bits())) / hashPower / 60));
+        LOG_DEBUG("Thread finds need {} Minutes", ((difficulty * pow(2, 256 - pConsensusArgs_->p_difficulty_1_target.bits())) / hashPower / 60));
         LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
         LOG_DEBUG("Difficulty: {} (bits: {})", difficulty, pBlockHeaderPoW->bits);
+		LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
         LOG_DEBUG("");
+		LOG_DEBUG("");
         return true;
     }
     
@@ -243,7 +265,7 @@ namespace P2pClouds {
         target.setCompact(bits, &isNegative, &isOverflow);
         
         // Check range
-        if (isNegative || target == 0 || isOverflow || target > p_difficulty_1_target)
+        if (isNegative || target == 0 || isOverflow || target > pConsensusArgs_->p_difficulty_1_target)
             return false;
         
         arith_uint256 hashResult;
@@ -257,7 +279,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
     {
-        if(pBlock->height() % ConsensusPow::cycleBlockHeight != 1)
+        if(pBlock->height() % pConsensusArgs_->cycleBlockHeight != 1)
         {
             BlockPtr pPrevBlock = pBlockchain()->getPrevBlock(pBlock);
             if(!pPrevBlock)
@@ -269,7 +291,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        if(pBlock->height() < ConsensusPow::cycleBlockHeight || pBlock->height() % ConsensusPow::cycleBlockHeight != 1)
+        if(pBlock->height() < pConsensusArgs_->cycleBlockHeight || pBlock->height() % pConsensusArgs_->cycleBlockHeight != 1)
         {
             return ((BlockHeaderPoW*)pLastBlock->pBlockHeader())->bits;
         }
@@ -279,7 +301,7 @@ namespace P2pClouds {
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->height(), ConsensusPow::cycleBlockHeight);
+        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->height(), pConsensusArgs_->cycleBlockHeight);
 
         assert(pFirstBlock.get() && pLastBlock.get());
 
@@ -288,33 +310,33 @@ namespace P2pClouds {
 
         uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimeval() - pFirstBlockHeaderPoW->getTimeval();
 
-        if (diffTimestamp < ConsensusPow::cycleTimestamp / 4)
-            diffTimestamp = ConsensusPow::cycleTimestamp / 4;
+        if (diffTimestamp < pConsensusArgs_->cycleTimestamp / 4)
+            diffTimestamp = pConsensusArgs_->cycleTimestamp / 4;
 
-        if (diffTimestamp > ConsensusPow::cycleTimestamp * 4)
-            diffTimestamp = ConsensusPow::cycleTimestamp * 4;
+        if (diffTimestamp > pConsensusArgs_->cycleTimestamp * 4)
+            diffTimestamp = pConsensusArgs_->cycleTimestamp * 4;
 
         arith_uint256 bnNew;
         bnNew.setCompact(pLastBlockHeaderPoW->bits);
 
         bnNew *= diffTimestamp;
-        bnNew /= cycleTimestamp;
+        bnNew /= pConsensusArgs_->cycleTimestamp;
 
-        if(bnNew > p_difficulty_1_target)
-            bnNew = p_difficulty_1_target;
+        if(bnNew > pConsensusArgs_->p_difficulty_1_target)
+            bnNew = pConsensusArgs_->p_difficulty_1_target;
 
         return bnNew.getCompact();
     }
 
     uint64_t ConsensusPow::calculateSubsidyValue(uint32_t blockHeight)
     {
-        int halvings = blockHeight / subsidyHalvingInterval;
+        int halvings = blockHeight / pConsensusArgs_->subsidyHalvingInterval;
 
         // Force block reward to zero when right shift is undefined.
         if (halvings >= 64)
             return 0;
 
-        uint64_t subsidy = 50 * valueUnit;
+        uint64_t subsidy = 50 * pConsensusArgs_->valueUnit;
 
         // Subsidy is cut in half every subsidyHalvingInterval blocks.
         subsidy >>= halvings;

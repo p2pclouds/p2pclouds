@@ -15,7 +15,7 @@ namespace P2pClouds {
 		, userHash_()
 		, userGas_(0)
 	{
-        pConsensus_ = std::shared_ptr<Consensus>(new ConsensusPow(this));
+        pConsensus_ = std::shared_ptr<Consensus>(new ConsensusPow(this, ConsensusArgs::create(ConsensusArgs::NORMAL)));
 	}
 
 	Blockchain::~Blockchain()
