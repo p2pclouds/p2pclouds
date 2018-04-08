@@ -27,7 +27,7 @@ namespace P2pClouds {
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
-		if(pBlock->height() != (chainHeight_ + 1))
+		if(pBlock->height() != chainHeight_)
 			return false;
 
 		if(pConsensus_ && !pConsensus_->validBlock(pBlock))

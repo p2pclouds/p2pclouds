@@ -101,8 +101,17 @@ namespace P2pClouds {
             return pBlockHeader_->getHash();
         }
         
+		void chainWork(arith_uint256 val) {
+			chainWork_ = val;
+		}
+
+		arith_uint256 chainWork() const {
+			return chainWork_;
+		}
+
 	protected:
 		uint32_t height_;
+		arith_uint256 chainWork_;
 		TRANSACTIONS transactions_;
         BlockHeader* pBlockHeader_;
 	};

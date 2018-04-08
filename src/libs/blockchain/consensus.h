@@ -82,12 +82,14 @@ namespace P2pClouds {
         
     	void createGenesisBlock();
 
+		bool addBlockToChain(BlockPtr pBlock);
 		BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain = true);
 
         uint32_t getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
         uint32_t getWorkTarget(BlockPtr pBlock);
         uint32_t calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
         uint64_t calculateSubsidyValue(uint32_t blockHeight);
+		arith_uint256 caculateChainWork(BlockPtr pBlock);
     };
     
 	typedef std::shared_ptr<Consensus> ConsensusPtr;

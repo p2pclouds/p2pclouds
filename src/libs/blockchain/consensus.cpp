@@ -91,7 +91,7 @@ namespace P2pClouds {
 		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
         BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
         
-		pBlock->height(1);
+		pBlock->height(0);
 		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
 		pBlockHeaderPoW->proof = 0;
 		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
@@ -109,7 +109,7 @@ namespace P2pClouds {
 		pBlock->addTransactions(pBlockchain()->currentTransactions());
         pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
 
-		pBlockchain()->addBlockToChain(pBlock);
+		addBlockToChain(pBlock);
 	}
 
     BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain)
@@ -136,7 +136,7 @@ namespace P2pClouds {
         pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
 		
 		if (pushToChain)
-			pBlockchain()->addBlockToChain(pBlock);
+			addBlockToChain(pBlock);
 
 		return pBlock;
 	}
@@ -241,7 +241,7 @@ namespace P2pClouds {
     	if(pBlockHeaderPoW->hashPrevBlock != pBlockchain()->lastBlock()->getHash())
 			return false;
 
-        if(!pBlockchain()->addBlockToChain(pFoundBlock))
+        if(!addBlockToChain(pFoundBlock))
             return false;
         
         LOG_DEBUG("Success with proof: {}", proof);
@@ -277,6 +277,12 @@ namespace P2pClouds {
         return true;
     }
 
+	bool ConsensusPow::addBlockToChain(BlockPtr pBlock)
+	{
+		pBlock->chainWork((pBlock->height() > 0 ? pBlockchain()->getBlock(pBlock->height() - 1, 0)->chainWork() : 0) + caculateChainWork(pBlock));
+		return pBlockchain()->addBlockToChain(pBlock);
+	}
+
     uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
     {
         if(pBlock->height() % pConsensusArgs_->cycleBlockHeight != 1)
@@ -298,6 +304,25 @@ namespace P2pClouds {
 
         return calculateNextWorkTarget(pBlock, pLastBlock);
     }
+
+	arith_uint256 ConsensusPow::caculateChainWork(BlockPtr pBlock)
+	{
+		bool isNegative;
+		bool isOverflow;
+
+		arith_uint256 target;
+		target.setCompact(((BlockHeaderPoW*)pBlock->pBlockHeader())->bits, &isNegative, &isOverflow);
+
+		// Check range
+		if (isNegative || target == 0 || isOverflow)
+			return 0;
+
+		// We need to compute 2**256 / (bnTarget+1), but we can't represent 2**256
+		// as it's too large for an arith_uint256. However, as 2**256 is at least as large
+		// as bnTarget+1, it is equal to ((2**256 - bnTarget - 1) / (bnTarget+1)) + 1,
+		// or ~bnTarget / (bnTarget+1) + 1.
+		return (~target / (target + 1)) + 1;
+	}
 
     uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
     {
