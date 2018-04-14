@@ -11,50 +11,31 @@ namespace P2pClouds {
     {
     public:
 		int32_t version;
-		uint256 hashPrevBlock;
-		uint256 hashMerkleRoot;
+		uint256_t hashPrevBlock;
+		uint256_t hashMerkleRoot;
 		uint32_t timeval;
+		uint32_t bits;
+		uint32_t proof;
 
         BlockHeader()
 			: version(P2PCLOUDS_VERSION)
 			, hashPrevBlock()
 			, hashMerkleRoot()
 			, timeval(0)
+			, bits(0)
+			, proof(0)
 		{
         }
         
         virtual ~BlockHeader()
         {
         }
-        
-		int64_t getTimeval() const { return (int64_t)timeval; }
 
-        virtual uint256_t getHash() const = 0;
-		
-        virtual void serialize(ByteBuffer& stream) const;
+		uint256_t getHash() const;
+		void serialize(ByteBuffer& stream) const;
+
+		std::string toString();
     };
-    
-    class BlockHeaderPoW : public BlockHeader
-	{
-	public:
-		uint32_t bits;
-		uint32_t proof;
-
-		BlockHeaderPoW()
-			: BlockHeader()
-			, bits(0)
-			, proof(0)
-
-		{
-		}
-
-        virtual ~BlockHeaderPoW()
-        {
-        }
-        
-		uint256_t getHash() const override;
-        void serialize(ByteBuffer& stream) const override;
-	};
 
 	class Block : public std::enable_shared_from_this<Block>
 	{
@@ -62,15 +43,12 @@ namespace P2pClouds {
 		Block();
 
 		Block(BlockHeader* pBlockHeader)
-			: height_(0)
-			, transactions_()
+			: transactions_()
             , pBlockHeader_(pBlockHeader)
 		{
 		}
 
 		virtual ~Block();
-
-		typedef std::vector< TransactionPtr > TRANSACTIONS;
 
 		void transactions(const TRANSACTIONS& vals) {
 			transactions_ = vals;
@@ -84,14 +62,6 @@ namespace P2pClouds {
 			return transactions_;
 		}
 
-		void height(uint32_t val) {
-			height_ = val;
-		}
-
-		uint32_t height() const {
-			return height_;
-		}
-
 		BlockHeader* pBlockHeader()
 		{
 			return pBlockHeader_;
@@ -100,18 +70,8 @@ namespace P2pClouds {
         virtual uint256_t getHash() const {
             return pBlockHeader_->getHash();
         }
-        
-		void chainWork(arith_uint256 val) {
-			chainWork_ = val;
-		}
-
-		arith_uint256 chainWork() const {
-			return chainWork_;
-		}
 
 	protected:
-		uint32_t height_;
-		arith_uint256 chainWork_;
 		TRANSACTIONS transactions_;
         BlockHeader* pBlockHeader_;
 	};

@@ -6,6 +6,8 @@
 #ifndef BITCOIN_UINT256_H
 #define BITCOIN_UINT256_H
 
+#include "common/endian.h"
+
 #include <assert.h>
 #include <cstring>
 #include <stdexcept>
@@ -128,6 +130,19 @@ namespace P2pClouds {
 		uint256() {}
 		explicit uint256(const std::vector<unsigned char>& vch) : base_blob<256>(vch) {}
 
+		/** A cheap hash function that just returns 64 bits from the result, it can be
+		* used when the contents are considered uniformly random. It is not appropriate
+		* when the value can easily be influenced from outside as e.g. a network adversary could
+		* provide values to trigger worst-case behavior.
+		* @note The result of this function is not stable between little and big endian.
+		*/
+		uint64_t GetCheapHash() const
+		{
+			uint64_t result;
+			memcpy((char*)&result, (char*)data, 8);
+			EndianConvert(result);
+			return result;
+		}
 	};
 
 	/* uint256 from const char *.

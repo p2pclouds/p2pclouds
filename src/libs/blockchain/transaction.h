@@ -52,4 +52,5 @@ namespace P2pClouds {
 	};
 
 	typedef std::shared_ptr<Transaction> TransactionPtr;
+	typedef std::vector<TransactionPtr> TRANSACTIONS;
 }

@@ -18,6 +18,7 @@ namespace P2pClouds {
 			pArgs->cycleTimestamp = (14 * 24 * 60 * 60);
 			pArgs->subsidyHalvingInterval = 210000;
 			pArgs->valueUnit = 100000000;
+			pArgs->hashBlockGenesis = uint256S("0");
 		}
 		else if (type == TEST)
 		{
@@ -27,13 +28,14 @@ namespace P2pClouds {
 			pArgs->cycleTimestamp = (14 * 24 * 60 * 60);
 			pArgs->subsidyHalvingInterval = 210000;
 			pArgs->valueUnit = 100000000;
+			pArgs->hashBlockGenesis = uint256S("0");
 		}
 
 		return pArgs;
 	}
 
 	Consensus::Consensus(Blockchain* pBlockchain, ConsensusArgsPtr args)
-    : pConsensusArgs_(args)
+    : pArgs_(args)
 	, pBlockchain_(pBlockchain)
 	{
 	}
@@ -41,37 +43,6 @@ namespace P2pClouds {
 	Consensus::~Consensus()
 	{
 	}
-
-    bool Consensus::validBlock(BlockPtr pBlock)
-    {
-        BlockHeader* pBlockHeader = (BlockHeader*)pBlock->pBlockHeader();
-
-        if(!validBlockTime(pBlockHeader->timeval))
-            return false;
-
-        if(!pBlockchain()->getPrevBlock(pBlock))
-            return false;
-    
-        return true;
-    }
-
-    bool Consensus::validBlockTime(time_t timeval)
-    {
-        if (timeval > getAdjustedTime() + 2 * 60 * 60)
-        {
-            LOG_ERROR("Illegal timeval({}), not conforming to adjustedTime({})!", timeval, getAdjustedTime());
-            return false;
-        }
-
-        time_t medianTime = pBlockchain()->getMedianBlockTimePastInChain();
-        if(timeval < medianTime)
-        {
-            LOG_ERROR("Illegal timeval({}), not conforming to medianTime({})!", timeval, medianTime);
-            return false;
-        }
-
-        return true;
-    }
 
     ConsensusPow::ConsensusPow(Blockchain* pBlockchain, ConsensusArgsPtr args)
     : Consensus(pBlockchain, args)
@@ -85,17 +56,16 @@ namespace P2pClouds {
     
     void ConsensusPow::createGenesisBlock()
 	{
-        if(pBlockchain()->chainHeight() > 0)
+        if(pBlockchain()->chainManager()->activeChainHeight() > 0)
             return;
 
-		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+		BlockPtr pBlock = std::make_shared<Block>(new BlockHeader());
+        BlockHeader* pBlockHeader = pBlock->pBlockHeader();
         
-		pBlock->height(0);
-		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
-		pBlockHeaderPoW->proof = 0;
-		pBlockHeaderPoW->hashPrevBlock = uint256S("0");
-        pBlockHeaderPoW->bits = pConsensusArgs_->b_difficulty_1_target.getCompact();
+		pBlockHeader->timeval = (uint32_t)getAdjustedTime();
+		pBlockHeader->proof = 0;
+		pBlockHeader->hashPrevBlock = uint256S("0");
+		pBlockHeader->bits = pArgs()->b_difficulty_1_target.getCompact();
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
@@ -107,55 +77,48 @@ namespace P2pClouds {
 
 		// packing Transactions
 		pBlock->addTransactions(pBlockchain()->currentTransactions());
-        pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
+		pBlockHeader->hashMerkleRoot = BlockMerkleRoot(*pBlock);
 
-		addBlockToChain(pBlock);
+		pArgs()->hashBlockGenesis = pBlock->getHash();
+		pBlockchain()->processNewBlock(pBlock);
 	}
 
-    BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain)
+    BlockPtr ConsensusPow::createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockIndex* pTipBlockIndex)
 	{
-		BlockPtr pBlock = std::make_shared<Block>(new BlockHeaderPoW());
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
+		BlockPtr pBlock = std::make_shared<Block>(new BlockHeader());
+		BlockHeader* pBlockHeader = pBlock->pBlockHeader();
         
-		pBlock->height(pBlockchain()->chainHeight() + 1);
-		pBlockHeaderPoW->timeval = (uint32_t)getAdjustedTime();
-		pBlockHeaderPoW->proof = proof;
-		pBlockHeaderPoW->hashPrevBlock = pLastBlock->getHash();
-        pBlockHeaderPoW->bits = (bits == 0 ? getNextWorkTarget(pBlock, pLastBlock) : bits);
+		pBlockHeader->timeval = (uint32_t)getAdjustedTime();
+		pBlockHeader->proof = proof;
+		pBlockHeader->hashPrevBlock = *pTipBlockIndex->phashBlock;
+		pBlockHeader->bits = (bits == 0 ? getNextWorkTarget(pBlock, pTipBlockIndex) : bits);
 
 		// coin base
 		TransactionPtr pBaseTransaction = std::make_shared<Transaction>();
 		pBaseTransaction->magic(extraProof);
-		pBaseTransaction->value(calculateSubsidyValue(pBlock->height()) - pBlockchain()->userGas());
+		pBaseTransaction->value(calculateSubsidyValue(pTipBlockIndex->height + 1/* curr block */) - pBlockchain()->userGas());
 		pBaseTransaction->recipient(pBlockchain()->userHash());
 		pBaseTransaction->sender("0");
 		pBlock->transactions().push_back(pBaseTransaction);
 
 		// packing Transactions
 		pBlock->addTransactions(pBlockchain()->currentTransactions());
-        pBlockHeaderPoW->hashMerkleRoot = BlockMerkleRoot(*pBlock);
-		
-		if (pushToChain)
-			addBlockToChain(pBlock);
+		pBlockHeader->hashMerkleRoot = BlockMerkleRoot(*pBlock);
 
 		return pBlock;
 	}
 
     bool ConsensusPow::validBlock(BlockPtr pBlock)
     {
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pBlock->pBlockHeader();
-        if(getWorkTarget(pBlock) != pBlockHeaderPoW->bits)
+        BlockHeader* pBlockHeader = pBlock->pBlockHeader();
+
+        if(!validProofOfWork(pBlock->getHash(), pBlockHeader->bits))
         {
-            LOG_ERROR("Difficulty mismatch! Block({}) != {})", pBlockHeaderPoW->bits, getWorkTarget(pBlock));
+			LOG_ERROR("or hash({}) doesn't match nBits! bits={})", pBlock->getHash().toString(), pBlockHeader->bits);
             return false;
         }
 
-        return Consensus::validBlock(pBlock);
-    }
-
-    bool ConsensusPow::validBlockTime(time_t timeval)
-    {
-        return Consensus::validBlockTime(timeval);
+        return true;
     }
 
     bool ConsensusPow::build()
@@ -168,31 +131,33 @@ namespace P2pClouds {
         unsigned int extraProof = 0;
         
         time_t startTimestamp = getTimeStamp();
-        BlockPtr pLastBlock = pBlockchain()->lastBlock();
         BlockPtr pFoundBlock;
         float difficulty = 1.f;
-        uint32_t chainHeight = pBlockchain()->chainHeight();
+
+		ChainPtr& activeChain = pBlockchain()->chainManager()->activeChain();
+        uint32_t chainHeight = activeChain->height();
+		BlockIndex* pLastBlock = activeChain->tip();
 
         while (true)
         {
-            if(chainHeight != pBlockchain()->chainHeight())
+            if(chainHeight != activeChain->height())
             {
                 //LOG_DEBUG("chainSize({}) != currchainHeight({}), build canceled!", chainHeight, pBlockchain()->chainHeight());
                 return false;
             }
 
-            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastBlock, false);
-            BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pNewBlock->pBlockHeader();
+            BlockPtr pNewBlock = createNewBlock(0, 0, ++extraProof, pLastBlock);
+            BlockHeader* pBlockHeader = pNewBlock->pBlockHeader();
             
             arith_uint256 target;
-            target.setCompact(pBlockHeaderPoW->bits);
+            target.setCompact(pBlockHeader->bits);
             
-            difficulty = (float)(pConsensusArgs_->b_difficulty_1_target / target).getdouble();
+            difficulty = (float)(pArgs_->b_difficulty_1_target / target).getdouble();
             
             ByteBuffer stream;
-            pBlockHeaderPoW->serialize(stream);
+			pBlockHeader->serialize(stream);
             
-            int woffset = stream.wpos() - sizeof(pBlockHeaderPoW->proof);
+            int woffset = stream.wpos() - sizeof(pBlockHeader->proof);
             
             uint256_t hash2561;
             uint256_t hash2562;
@@ -200,21 +165,21 @@ namespace P2pClouds {
             do
             {
                 ++tries;
-                ++pBlockHeaderPoW->proof;
+                ++pBlockHeader->proof;
                 
                 stream.wpos(woffset);
-                stream << pBlockHeaderPoW->proof;
+                stream << pBlockHeader->proof;
                 SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
-                SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+                SHA256(hash2561.begin(), uint256_t::WIDTH, (unsigned char*)&hash2562);
 
-            } while (tries < maxTries && pBlockHeaderPoW->proof < innerLoopCount && !validProofOfWork(hash2562, pBlockHeaderPoW->proof, pBlockHeaderPoW->bits));
+            } while (tries < maxTries && pBlockHeader->proof < innerLoopCount && !validProofOfWork(hash2562, pBlockHeader->bits));
             
             if (tries == maxTries)
             {
                 break;
             }
             
-            if (pBlockHeaderPoW->proof >= innerLoopCount)
+            if (pBlockHeader->proof >= innerLoopCount)
             {
                 //LOG_ERROR("Failed after {} (maxProof) tries)", pBlockHeaderPoW->proof);
                 //LOG_DEBUG("");
@@ -232,31 +197,33 @@ namespace P2pClouds {
             return false;
         }
         
-        BlockHeaderPoW* pBlockHeaderPoW = (BlockHeaderPoW*)pFoundBlock->pBlockHeader();
+        BlockHeader* pBlockHeader = pFoundBlock->pBlockHeader();
         
         uint64_t proof = tries;
         float elapsedTime = float(getTimeStamp() - startTimestamp) / 1000.f;
         float hashPower = proof / elapsedTime;
         
-    	if(pBlockHeaderPoW->hashPrevBlock != pBlockchain()->lastBlock()->getHash())
-			return false;
+		// Allow to put into candidate area
+		//if (pBlockHeader->hashPrevBlock != activeChain->tipBlock()->getHash())
+		//	return false;
 
-        if(!addBlockToChain(pFoundBlock))
+		BlockIndex* pBlockIndex = pBlockchain()->processNewBlock(pFoundBlock);
+        if(!pBlockIndex)
             return false;
-        
+
         LOG_DEBUG("Success with proof: {}", proof);
-		LOG_DEBUG("chainHeight:{}, rewardValue:{}", pFoundBlock->height(), (pFoundBlock->transactions()[0]->value() / pConsensusArgs_->valueUnit));
+		LOG_DEBUG("chainHeight:{}, rewardValue:{}", pBlockIndex->height, (pFoundBlock->transactions()[0]->value() / pArgs_->valueUnit));
         LOG_DEBUG("Elapsed Time: {} seconds", elapsedTime);
-        LOG_DEBUG("Thread finds need {} Minutes", ((difficulty * pow(2, 256 - pConsensusArgs_->p_difficulty_1_target.bits())) / hashPower / 60));
+        LOG_DEBUG("Thread finds need {} Minutes", ((difficulty * pow(2, 256 - pArgs_->p_difficulty_1_target.bits())) / hashPower / 60));
         LOG_DEBUG("Hashing Power: {} hashes per second", hashPower);
-        LOG_DEBUG("Difficulty: {} (bits: {})", difficulty, pBlockHeaderPoW->bits);
-		LOG_DEBUG("Hash: {}", pFoundBlock->getHash().toString());
+        LOG_DEBUG("Difficulty: {} (bits: {})", difficulty, pBlockHeader->bits);
+		LOG_DEBUG("Hash: {}", pBlockIndex->phashBlock->toString());
         LOG_DEBUG("");
 		LOG_DEBUG("");
         return true;
     }
     
-    bool ConsensusPow::validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits)
+    bool ConsensusPow::validProofOfWork(const uint256_t& hash, uint32_t bits)
     {
         bool isNegative;
         bool isOverflow;
@@ -265,9 +232,12 @@ namespace P2pClouds {
         target.setCompact(bits, &isNegative, &isOverflow);
         
         // Check range
-        if (isNegative || target == 0 || isOverflow || target > pConsensusArgs_->p_difficulty_1_target)
-            return false;
-        
+		if (isNegative || target == 0 || isOverflow || target > pArgs_->p_difficulty_1_target)
+		{
+			LOG_ERROR("bits below minimum work! bits={})", bits);
+			return false;
+		}
+
         arith_uint256 hashResult;
         uintToArith256(hashResult, hash);
         
@@ -277,91 +247,66 @@ namespace P2pClouds {
         return true;
     }
 
-	bool ConsensusPow::addBlockToChain(BlockPtr pBlock)
-	{
-		pBlock->chainWork((pBlock->height() > 0 ? pBlockchain()->getBlock(pBlock->height() - 1, 0)->chainWork() : 0) + caculateChainWork(pBlock));
-		return pBlockchain()->addBlockToChain(pBlock);
-	}
-
     uint32_t ConsensusPow::getWorkTarget(BlockPtr pBlock)
     {
-        if(pBlock->height() % pConsensusArgs_->cycleBlockHeight != 1)
+		BlockIndex* pPrevBlockIndex = pBlockchain()->chainManager()->findBlockIndex(pBlock->pBlockHeader()->hashPrevBlock);
+
+        if((pPrevBlockIndex->height + 1/* curr block */) % pArgs_->cycleBlockHeight != 1)
         {
-            BlockPtr pPrevBlock = pBlockchain()->getPrevBlock(pBlock);
-            if(!pPrevBlock)
+            if(!pPrevBlockIndex)
                 return 0;
         }
         
-        return getNextWorkTarget(pBlock, pBlockchain()->getPrevBlock(pBlock));
+		assert(pPrevBlockIndex);
+        return getNextWorkTarget(pBlock, pPrevBlockIndex);
     }
 
-    uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
+    uint32_t ConsensusPow::getNextWorkTarget(BlockPtr pBlock, BlockIndex* pLastBlockIndex)
     {
-        if(pBlock->height() < pConsensusArgs_->cycleBlockHeight || pBlock->height() % pConsensusArgs_->cycleBlockHeight != 1)
+		uint32_t currBlockHeight = (pLastBlockIndex->height + 1);
+        if(currBlockHeight < pArgs_->cycleBlockHeight || currBlockHeight % pArgs_->cycleBlockHeight != 1)
         {
-            return ((BlockHeaderPoW*)pLastBlock->pBlockHeader())->bits;
+            return pLastBlockIndex->bits;
         }
 
-        return calculateNextWorkTarget(pBlock, pLastBlock);
+        return calculateNextWorkTarget(pBlock, pLastBlockIndex);
     }
 
-	arith_uint256 ConsensusPow::caculateChainWork(BlockPtr pBlock)
-	{
-		bool isNegative;
-		bool isOverflow;
-
-		arith_uint256 target;
-		target.setCompact(((BlockHeaderPoW*)pBlock->pBlockHeader())->bits, &isNegative, &isOverflow);
-
-		// Check range
-		if (isNegative || target == 0 || isOverflow)
-			return 0;
-
-		// We need to compute 2**256 / (bnTarget+1), but we can't represent 2**256
-		// as it's too large for an arith_uint256. However, as 2**256 is at least as large
-		// as bnTarget+1, it is equal to ((2**256 - bnTarget - 1) / (bnTarget+1)) + 1,
-		// or ~bnTarget / (bnTarget+1) + 1.
-		return (~target / (target + 1)) + 1;
-	}
-
-    uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock)
+    uint32_t ConsensusPow::calculateNextWorkTarget(BlockPtr pBlock, BlockIndex* pLastBlockIndex)
     {
-        BlockPtr pFirstBlock = pBlockchain()->getBlock(pLastBlock->height(), pConsensusArgs_->cycleBlockHeight);
+		BlockIndex* pFirstBlockIndex = pBlockchain()->chainManager()->getBlock(pLastBlockIndex->height, pArgs_->cycleBlockHeight);
 
-        assert(pFirstBlock.get() && pLastBlock.get());
+        assert(pFirstBlockIndex && pLastBlockIndex);
 
-        BlockHeaderPoW* pFirstBlockHeaderPoW = (BlockHeaderPoW*)pFirstBlock->pBlockHeader();
-        BlockHeaderPoW* pLastBlockHeaderPoW = (BlockHeaderPoW*)pLastBlock->pBlockHeader();
+        uint32_t diffTimestamp = pLastBlockIndex->getTimeval() - pFirstBlockIndex->getTimeval();
 
-        uint32_t diffTimestamp = pLastBlockHeaderPoW->getTimeval() - pFirstBlockHeaderPoW->getTimeval();
+        if (diffTimestamp < pArgs_->cycleTimestamp / 4)
+            diffTimestamp = pArgs_->cycleTimestamp / 4;
 
-        if (diffTimestamp < pConsensusArgs_->cycleTimestamp / 4)
-            diffTimestamp = pConsensusArgs_->cycleTimestamp / 4;
-
-        if (diffTimestamp > pConsensusArgs_->cycleTimestamp * 4)
-            diffTimestamp = pConsensusArgs_->cycleTimestamp * 4;
+        if (diffTimestamp > pArgs_->cycleTimestamp * 4)
+            diffTimestamp = pArgs_->cycleTimestamp * 4;
 
         arith_uint256 bnNew;
-        bnNew.setCompact(pLastBlockHeaderPoW->bits);
+        bnNew.setCompact(pLastBlockIndex->bits);
 
         bnNew *= diffTimestamp;
-        bnNew /= pConsensusArgs_->cycleTimestamp;
+        bnNew /= pArgs_->cycleTimestamp;
 
-        if(bnNew > pConsensusArgs_->p_difficulty_1_target)
-            bnNew = pConsensusArgs_->p_difficulty_1_target;
+        if(bnNew > pArgs_->p_difficulty_1_target)
+            bnNew = pArgs_->p_difficulty_1_target;
 
         return bnNew.getCompact();
     }
 
     uint64_t ConsensusPow::calculateSubsidyValue(uint32_t blockHeight)
     {
-        int halvings = blockHeight / pConsensusArgs_->subsidyHalvingInterval;
+        int halvings = blockHeight / pArgs_->subsidyHalvingInterval;
 
         // Force block reward to zero when right shift is undefined.
         if (halvings >= 64)
             return 0;
 
-        uint64_t subsidy = 50 * pConsensusArgs_->valueUnit;
+        uint64_t subsidy = 50 * pArgs_->valueUnit;
 
         // Subsidy is cut in half every subsidyHalvingInterval blocks.
         subsidy >>= halvings;

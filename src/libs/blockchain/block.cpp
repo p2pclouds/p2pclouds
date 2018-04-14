@@ -9,10 +9,10 @@ namespace P2pClouds {
         stream << version;
         hashPrevBlock.serialize(stream);
         hashMerkleRoot.serialize(stream);
-        stream << timeval;
+        stream << timeval << bits << proof;
     }
 
-	uint256_t BlockHeaderPoW::getHash() const
+	uint256_t BlockHeader::getHash() const
 	{
 		ByteBuffer stream;
         
@@ -23,21 +23,19 @@ namespace P2pClouds {
         SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
 
         uint256_t hash2562;
-        SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+        SHA256(hash2561.begin(), uint256_t::WIDTH, (unsigned char*)&hash2562);
 		return hash2562;
 	}
 
-    void BlockHeaderPoW::serialize(ByteBuffer& stream) const
-    {
-        BlockHeader::serialize(stream);
-        stream << bits << proof;
-    }
-    
+	std::string BlockHeader::toString()
+	{
+		return fmt::format("version={}, timeval={}, bits={}, proof={}, hash={}, hashPrevBlock={}, hashMerkleRoot={}",
+			version, timeval, bits, proof, getHash().toString(), hashPrevBlock.toString(), hashMerkleRoot.toString());
+	}
+
 	Block::Block()
-		: height_(0)
-		, chainWork_()
-		, transactions_()
-        , pBlockHeader_(new BlockHeaderPoW())
+		: transactions_()
+        , pBlockHeader_(new BlockHeader())
 	{
 	}
 

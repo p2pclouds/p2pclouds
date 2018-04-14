@@ -7,6 +7,8 @@ namespace P2pClouds {
     class Block;
     typedef std::shared_ptr<Block> BlockPtr;
 
+	class BlockIndex;
+
     class Blockchain;
 	class ConsensusArgs;
 	typedef std::shared_ptr<ConsensusArgs> ConsensusArgsPtr;
@@ -36,6 +38,8 @@ namespace P2pClouds {
 
 		// Unit of reward value
 		uint64_t valueUnit;
+
+		uint256_t hashBlockGenesis;
 	};
 
 	class Consensus : public std::enable_shared_from_this<Consensus>
@@ -45,19 +49,20 @@ namespace P2pClouds {
 		virtual ~Consensus();
 
         virtual bool build() = 0;
-        virtual bool validBlock(BlockPtr pBlock);
-        virtual bool validBlockTime(time_t timeval);
+		virtual bool validBlock(BlockPtr pBlock) = 0;
+		virtual void createGenesisBlock() = 0;
+		virtual BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockIndex* pTipBlockIndex) = 0;
 
         Blockchain* pBlockchain() const {
             return pBlockchain_;
         }
         
-		ConsensusArgsPtr pConsensusArgs() {
-			return pConsensusArgs_;
+		ConsensusArgsPtr pArgs() {
+			return pArgs_;
 		}
 
 	protected:
-		ConsensusArgsPtr pConsensusArgs_;
+		ConsensusArgsPtr pArgs_;
         Blockchain* pBlockchain_;
 	};
 
@@ -75,21 +80,18 @@ namespace P2pClouds {
         ConsensusPow(Blockchain* pBlockchain, ConsensusArgsPtr args);
         virtual ~ConsensusPow();
         
-        bool build() override;
-        bool validBlock(BlockPtr pBlock) override;
-        bool validBlockTime(time_t timeval) override;
-        bool validProofOfWork(const uint256_t& hash, uint32_t proof, uint32_t bits);
+		virtual  bool build() override;
+		virtual bool validBlock(BlockPtr pBlock) override;
+		virtual bool validProofOfWork(const uint256_t& hash, uint32_t bits);
         
-    	void createGenesisBlock();
+		virtual void createGenesisBlock() override;
 
-		bool addBlockToChain(BlockPtr pBlock);
-		BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockPtr pLastBlock, bool pushToChain = true);
+		virtual BlockPtr createNewBlock(uint32_t bits, uint32_t proof, unsigned int extraProof, BlockIndex* pTipBlockIndex) override;
 
-        uint32_t getNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
+        uint32_t getNextWorkTarget(BlockPtr pBlock, BlockIndex* pLastBlockIndex);
         uint32_t getWorkTarget(BlockPtr pBlock);
-        uint32_t calculateNextWorkTarget(BlockPtr pBlock, BlockPtr pLastBlock);
+        uint32_t calculateNextWorkTarget(BlockPtr pBlock, BlockIndex* pLastBlockIndex);
         uint64_t calculateSubsidyValue(uint32_t blockHeight);
-		arith_uint256 caculateChainWork(BlockPtr pBlock);
     };
     
 	typedef std::shared_ptr<Consensus> ConsensusPtr;

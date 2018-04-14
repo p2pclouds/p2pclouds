@@ -6,6 +6,8 @@
 #ifndef BITCOIN_ARITH_UINT256_H
 #define BITCOIN_ARITH_UINT256_H
 
+#include "common/endian.h"
+
 #include <assert.h>
 #include <cstring>
 #include <stdexcept>

@@ -25,7 +25,7 @@ namespace P2pClouds {
         SHA256(stream.data(), stream.length(), (unsigned char*)&hash2561);
         
         uint256_t hash2562;
-        SHA256(hash2561.begin(), uint256::WIDTH, (unsigned char*)&hash2562);
+        SHA256(hash2561.begin(), uint256_t::WIDTH, (unsigned char*)&hash2562);
         return hash2562;
 	}
 }

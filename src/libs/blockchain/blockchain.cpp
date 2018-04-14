@@ -6,8 +6,7 @@
 namespace P2pClouds {
 
 	Blockchain::Blockchain()
-		: chain_()
-		, chainHeight_(0)
+		: chainManager_(NULL)
         , pConsensus_()
 		, currentTransactions_()
         , pThreadPool_(NULL)
@@ -15,6 +14,7 @@ namespace P2pClouds {
 		, userHash_()
 		, userGas_(0)
 	{
+		chainManager_ = std::make_shared<ChainManager>(this);
         pConsensus_ = std::shared_ptr<Consensus>(new ConsensusPow(this, ConsensusArgs::create(ConsensusArgs::NORMAL)));
 	}
 
@@ -23,45 +23,32 @@ namespace P2pClouds {
         SAFE_RELEASE(pThreadPool_);
 	}
 
-	bool Blockchain::addBlockToChain(BlockPtr pBlock)
+	ConsensusArgs* Blockchain::pConsensusArgs()
+	{
+		return pConsensus_ ? pConsensus_->pArgs().get() : NULL;
+	}
+
+	BlockIndex* Blockchain::processNewBlock(BlockPtr pBlock)
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);
 
-		if(pBlock->height() != chainHeight_)
-			return false;
+		BlockIndex* pBlockIndex = chainManager_->acceptBlock(pBlock);
+		if (!pBlockIndex)
+			return NULL;
 
-		if(pConsensus_ && !pConsensus_->validBlock(pBlock))
-			return false;
-
-		chain_.push_back(pBlock);
-		++chainHeight_;
-
-		currentTransactions_.erase(currentTransactions_.begin(), 
-			currentTransactions_.begin() + (pBlock->transactions().size() - 1));
-
-		return true;
-	}
-
-	time_t Blockchain::getMedianBlockTimePastInChain(size_t range)
-	{
-		std::lock_guard<std::recursive_mutex> lg(mutex_);
-		std::vector<time_t> blockTimes;
-
-		BlockList::reverse_iterator rit = chain_.rbegin();
-		for (; rit != chain_.rend(); ++rit)
+		TRANSACTIONS& transactions = pBlock->transactions();
+		if (currentTransactions_.size() > 0 && transactions.size() > 1/* coinbase*/ && 
+			currentTransactions_[transactions.size() - 2/* -coinbase*/].get() ==
+			transactions[transactions.size() - 1].get())
 		{
-        	blockTimes.push_back((*rit)->pBlockHeader()->getTimeval());
-
-			if(blockTimes.size() == range)
-				break;
+			currentTransactions_.erase(currentTransactions_.begin(),
+				currentTransactions_.begin() + (pBlock->transactions().size() - 1));
 		}
 
-		std::sort(blockTimes.begin(), blockTimes.end(), std::less<time_t>());
-
-		return blockTimes[blockTimes.size() / 2];
+		return pBlockIndex;
 	}
 
-	uint32_t Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value)
+	TransactionPtr Blockchain::createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
@@ -72,53 +59,7 @@ namespace P2pClouds {
 
         currentTransactions_.push_back(pTransaction);
 
-		return chainHeight() > 0 ? (lastBlock()->height() + 1) : 0;
-	}
-
-	BlockPtr Blockchain::lastBlock()
-	{
-        std::lock_guard<std::recursive_mutex> lg(mutex_);
-		return chain_.back();
-	}
-
-	BlockPtr Blockchain::getBlock(size_t startBlockHeight, size_t blockOffsetHeight)
-	{
-		std::lock_guard<std::recursive_mutex> lg(mutex_);
-
-		BlockList::reverse_iterator rit = chain_.rbegin();
-		for (; rit != chain_.rend(); ++rit)
-		{
-			if(startBlockHeight == 0 || startBlockHeight == (*rit)->height())
-			{
-				startBlockHeight = 0;
-				if(blockOffsetHeight == 0 || --blockOffsetHeight == 0)
-        			return (*rit);
-			}
-		}
-
-		LOG_ERROR("not found block! startBlockHeight={}, blockOffsetHeight={}, chainHeight={}", 
-			startBlockHeight, blockOffsetHeight, chainHeight());
-
-		return BlockPtr(NULL);
-	}
-
-	BlockPtr Blockchain::getPrevBlock(BlockPtr pBlock)
-	{
-		std::lock_guard<std::recursive_mutex> lg(mutex_);
-
-		BlockList::reverse_iterator rit = chain_.rbegin();
-		for (; rit != chain_.rend(); ++rit)
-		{
-			if(pBlock->pBlockHeader()->hashPrevBlock == (*rit)->getHash())
-			{
-        		return (*rit);
-			}
-		}
-
-		LOG_ERROR("not found prevBlock! height={}, hashPrevBlock={}", pBlock->height(), 
-			pBlock->pBlockHeader()->hashPrevBlock.toString());
-
-		return BlockPtr(NULL);
+		return pTransaction;
 	}
 
     ConsensusPtr Blockchain::pConsensus()

@@ -167,7 +167,7 @@ namespace P2pClouds {
 
 	/** Compute the 256-bit hash of an object. */
 	template<typename T1>
-	inline uint256 Hash(const T1 pbegin, const T1 pend)
+	inline uint256_t Hash(const T1 pbegin, const T1 pend)
 	{
 		static const unsigned char pblank[1] = {};
 
@@ -178,7 +178,7 @@ namespace P2pClouds {
 
 	/** Compute the 256-bit hash of the concatenation of two objects. */
 	template<typename T1, typename T2>
-	inline uint256 Hash(const T1 p1begin, const T1 p1end,
+	inline uint256_t Hash(const T1 p1begin, const T1 p1end,
 		const T2 p2begin, const T2 p2end) {
 		static const unsigned char pblank[1] = {};
 
@@ -205,7 +205,7 @@ namespace P2pClouds {
 	uint256_t BlockMerkleRoot(const Block& block, bool* mutated)
 	{
 		std::vector<uint256_t> leaves;
-		Block::TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
+		TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
 
 		leaves.resize(vtx.size());
 		for (size_t s = 0; s < vtx.size(); s++) {
@@ -217,7 +217,7 @@ namespace P2pClouds {
 	uint256_t BlockWitnessMerkleRoot(const Block& block, bool* mutated)
 	{
 		std::vector<uint256_t> leaves;
-		Block::TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
+		TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
 
 		leaves.resize(vtx.size());
 		leaves[0].setNull(); // The witness hash of the coinbase is 0.
@@ -230,7 +230,7 @@ namespace P2pClouds {
 	std::vector<uint256_t> BlockMerkleBranch(const Block& block, uint32_t position)
 	{
 		std::vector<uint256_t> leaves;
-		Block::TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
+		TRANSACTIONS vtx = const_cast<Block&>(block).transactions();
 
 		leaves.resize(vtx.size());
 		for (size_t s = 0; s < vtx.size(); s++) {

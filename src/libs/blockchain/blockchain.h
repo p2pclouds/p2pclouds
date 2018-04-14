@@ -2,8 +2,7 @@
 
 #include "common/common.h"
 
-#include "block.h"
-#include "transaction.h"
+#include "chain.h"
 #include "common/threadpool.h"
 
 namespace P2pClouds {
@@ -11,31 +10,22 @@ namespace P2pClouds {
     class Consensus;
     typedef std::shared_ptr<Consensus> ConsensusPtr;
 
+	class ConsensusArgs;
+	typedef std::shared_ptr<ConsensusArgs> ConsensusArgsPtr;
+
 	class Blockchain
 	{
 	public:
 		Blockchain();
 		virtual ~Blockchain();
 
-		uint32_t createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value);
+		TransactionPtr createNewTransaction(const std::string& sender, const std::string& recipient, uint32_t value);
 
-		BlockPtr lastBlock();
-		BlockPtr getBlock(size_t startBlockHeight, size_t blockOffsetHeight);
-		BlockPtr getPrevBlock(BlockPtr pBlock);
+		BlockIndex* processNewBlock(BlockPtr pBlock);
 
-		time_t getMedianBlockTimePastInChain(size_t range = 11);
-
-		bool addBlockToChain(BlockPtr pBlock);
-
-		typedef std::list< BlockPtr > BlockList;
-		BlockList& chain() 
+		ChainManagerPtr& chainManager()
 		{
-			std::lock_guard<std::recursive_mutex> lg(mutex_);
-			return chain_;
-		}
-
-		uint32_t chainHeight() const {
-			return chainHeight_;
+			return chainManager_;
 		}
 
 		std::vector< TransactionPtr >& currentTransactions() 
@@ -60,10 +50,14 @@ namespace P2pClouds {
 			return mutex_;
 		}
 
+		BlockMap& mapBlockIndex() {
+			return chainManager_->mapBlockIndex();
+		}
+
+		ConsensusArgs* pConsensusArgs();
 
 	protected:
-		BlockList chain_;
-		uint32_t chainHeight_;
+		ChainManagerPtr chainManager_;
 
         ConsensusPtr pConsensus_;
 		std::vector< TransactionPtr > currentTransactions_;
@@ -73,6 +67,7 @@ namespace P2pClouds {
 
 		std::string userHash_;
 		uint64_t userGas_;
+
 	};
 
 }
