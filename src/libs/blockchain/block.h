@@ -32,7 +32,9 @@ namespace P2pClouds {
         }
 
 		uint256_t getHash() const;
+
 		void serialize(ByteBuffer& stream) const;
+		uint32_t getSerializeSize();
 
 		std::string toString();
     };
@@ -71,8 +73,13 @@ namespace P2pClouds {
             return pBlockHeader_->getHash();
         }
 
+		uint32_t getSerializeSize();
+
 	protected:
+		// network and disk
 		TRANSACTIONS transactions_;
+
+		// network and disk
         BlockHeader* pBlockHeader_;
 	};
 

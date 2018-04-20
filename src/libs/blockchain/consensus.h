@@ -40,6 +40,15 @@ namespace P2pClouds {
 		uint64_t valueUnit;
 
 		uint256_t hashBlockGenesis;
+
+		// The maximum allowed size for a serialized block, in bytes (only for buffer size limits)
+		uint32_t maxBlockSerializedSize;
+
+		// The maximum allowed weight for a block, see BIP 141 (network rule)
+		uint32_t maxBlockWeight;
+
+		// The maximum allowed number of signature check operations in a block (network rule), is maxBlockWeight / 50
+		int64_t maxBlockSigopsCost;
 	};
 
 	class Consensus : public std::enable_shared_from_this<Consensus>

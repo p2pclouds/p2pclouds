@@ -12,6 +12,20 @@ namespace P2pClouds {
         stream << timeval << bits << proof;
     }
 
+	uint32_t BlockHeader::getSerializeSize()
+	{
+		uint32_t size = 0;
+
+		size += ByteBuffer::typeSize(version);
+		size += ByteBuffer::typeSize(hashPrevBlock);
+		size += ByteBuffer::typeSize(hashMerkleRoot);
+		size += ByteBuffer::typeSize(timeval);
+		size += ByteBuffer::typeSize(bits);
+		size += ByteBuffer::typeSize(proof);
+
+		return size;
+	}
+
 	uint256_t BlockHeader::getHash() const
 	{
 		ByteBuffer stream;
@@ -43,4 +57,17 @@ namespace P2pClouds {
 	{
         SAFE_RELEASE(pBlockHeader_);
 	}
+
+	uint32_t Block::getSerializeSize()
+	{
+		uint32_t size = pBlockHeader_->getSerializeSize();
+
+		for (auto& item : transactions_)
+		{
+			size += item->getSerializeSize();
+		}
+
+		return size;
+	}
+
 }

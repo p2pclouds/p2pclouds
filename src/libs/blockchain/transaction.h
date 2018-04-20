@@ -44,6 +44,12 @@ namespace P2pClouds {
 
 		uint256_t getHash() const;
 
+		bool isValueBase() const {
+			return true;
+		}
+
+		uint32_t getSerializeSize();
+
 	protected:
 		std::string sender_;
 		std::string recipient_;

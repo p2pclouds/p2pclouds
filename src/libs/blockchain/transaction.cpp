@@ -28,4 +28,10 @@ namespace P2pClouds {
         SHA256(hash2561.begin(), uint256_t::WIDTH, (unsigned char*)&hash2562);
         return hash2562;
 	}
+
+	uint32_t Transaction::getSerializeSize()
+	{
+		uint32_t size = 0;
+		return 0;
+	}
 }

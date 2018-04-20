@@ -1,6 +1,7 @@
 #include "chain.h"
 #include "consensus.h"
 #include "blockchain.h"
+#include "merkle.h"
 #include "log/log.h"
 
 namespace P2pClouds {
@@ -106,8 +107,10 @@ namespace P2pClouds {
 		, activeChain_(new Chain())
 		, mutex_()
 		, blockIndexCandidates()
+		, mapUnlinkedBlocks()
 		, mapBlockIndex_()
 		, mapBlockNetNodeID_()
+		, BlockSequenceIDCounter_(1)
 	{
 	}
 
@@ -135,7 +138,12 @@ namespace P2pClouds {
 		return (~target / (target + 1)) + 1;
 	}
 
-	bool ChainManager::validBlock(BlockPtr pBlock)
+	bool ChainManager::validTransaction(Transaction* pTransaction)
+	{
+		return true;
+	}
+
+	bool ChainManager::validBlockHeader(BlockPtr pBlock)
 	{
 		ConsensusPtr pConsensus = pBlockchain_->pConsensus();
 
@@ -149,15 +157,85 @@ namespace P2pClouds {
 		return true;
 	}
 
+	bool ChainManager::validBlock(BlockPtr pBlock)
+	{
+		if (!validBlockHeader(pBlock))
+			return false;
+
+		bool mutated;
+		uint256_t hashMerkleRoot = BlockMerkleRoot(*pBlock, &mutated);
+
+		if (hashMerkleRoot != pBlock->pBlockHeader()->hashMerkleRoot)
+		{
+			LOG_ERROR("hashMerkleRoot mismatch! {}, block: {}", hashMerkleRoot.toString(), 
+				pBlock->pBlockHeader()->hashMerkleRoot.toString());
+
+			return false;
+		}
+
+		if (mutated)
+		{
+			LOG_ERROR("duplicate transaction!");
+			return false;
+		}
+
+		// Size limits
+		TRANSACTIONS& blockTransactions = pBlock->transactions();
+
+		ConsensusArgs* pArgs = pBlockchain_->pConsensusArgs();
+
+		uint32_t serializeSize = pBlock->getSerializeSize();
+		if (blockTransactions.empty() || blockTransactions.size() >  pArgs->maxBlockWeight || serializeSize >  pArgs->maxBlockWeight)
+		{
+			LOG_ERROR("size limits failed! blockTransactions={}, serializeSize={}", blockTransactions.size(), serializeSize);
+			return false;
+		}
+
+		// First transaction must be coinbase, the rest must not be
+		if (!blockTransactions[0]->isValueBase())
+		{
+			LOG_ERROR("first tx is not valueBase! size={}", blockTransactions.size());
+			return false;
+		}
+
+		for (unsigned int i = 1; i < blockTransactions.size(); i++)
+		{
+			if (blockTransactions[i]->isValueBase())
+			{
+				LOG_ERROR("more than one valueBase! size={}", blockTransactions.size());
+				return false;
+			}
+		}
+
+		unsigned int nSigOps = 0;
+
+		// Check transactions
+		for (auto& item : blockTransactions)
+		{
+			if (!validTransaction(item.get()))
+			{
+				return false;
+			}
+
+			//nSigOps += GetLegacySigOpCount(tx);
+		}
+
+		if (nSigOps > pArgs->maxBlockSigopsCost)
+		{
+			LOG_ERROR("out of bounds SigOpCount! nSigOps={}", nSigOps);
+			return false;
+		}
+
+		return true;
+	}
+
 	BlockIndex* ChainManager::acceptBlock(BlockPtr pBlock)
 	{
 		std::lock_guard<std::recursive_mutex> lg(mutex_);
 
 		uint256_t blockHash = pBlock->getHash();
-		bool isBlockGenesis = (!pBlockchain_->pConsensusArgs() || blockHash == pBlockchain_->pConsensusArgs()->hashBlockGenesis);
 
-		if (!validBlock(pBlock))
-			return NULL;
+		bool isBlockGenesis = (!pBlockchain_->pConsensusArgs() || blockHash == pBlockchain_->pConsensusArgs()->hashBlockGenesis);
 
 		// Store to disk
 		BlockIndex* pBlockIndex = NULL;
@@ -167,12 +245,15 @@ namespace P2pClouds {
 		{
 			pBlockIndex = pFindIndex;
 
-			if (!pBlockIndex->valid())
+			if (!pBlockIndex->isValid())
 			{
 				LOG_ERROR("accept error block! status={}, block: {}", pBlockIndex->status, pBlock->pBlockHeader()->toString());
 				return NULL;
 			}
 		}
+
+		if (!validBlockHeader(pBlock))
+			return NULL;
 
 		// Get prev block index
 		BlockIndex* pBlockIndexPrev = NULL;
@@ -186,7 +267,7 @@ namespace P2pClouds {
 				return false;
 			}
 
-			if (!pBlockIndexPrev->valid())
+			if (!pBlockIndexPrev->isValid())
 			{
 				LOG_ERROR("prev block invalid! block index: {}", pBlockIndexPrev->toString());
 				return false;
@@ -202,19 +283,13 @@ namespace P2pClouds {
 		//bool hasMoreWork = (pTipBlockIndex ? pBlockIndex->chainWork > pTipBlockIndex->chainWork : true);
 		//bool tooFarAhead = (pBlockIndex->height > int(activeChainHeight() + activeChainMinHeight));
 
-		if (!isBlockGenesis)
+		if (!isBlockGenesis && !validBlock(pBlock))
+			return NULL;
+
+		if (!receiveBlock(pBlock, pBlockIndex))
 		{
-			if (!receiveBlock(pBlock))
-			{
-				delete pBlockIndex;
-				return NULL;
-			}
-		}
-		else
-		{
-			activeChain_->setTip(NULL);
-			activeChain_->setTip(pBlockIndex);
-			return pBlockIndex;
+			delete pBlockIndex;
+			return NULL;
 		}
 
 		if (!activateBestChain(pBlock) || !checkAllBlockIndexs())
@@ -228,6 +303,8 @@ namespace P2pClouds {
 
 	BlockIndex* ChainManager::addToBlockIndex(BlockPtr pBlock)
 	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+
 		BlockMap& mapBlockIndex = pBlockchain_->mapBlockIndex();
 
 		// Construct new block index object
@@ -258,13 +335,103 @@ namespace P2pClouds {
 		return true;
 	}
 
-	bool ChainManager::receiveBlock(BlockPtr pBlock)
+	bool ChainManager::receiveBlock(BlockPtr pBlock, BlockIndex* pBlockIndex)
 	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+
+		pBlockIndex->numBlockTransactions = pBlock->transactions().size();
+		pBlockIndex->numChainTransactions = 0;
+		pBlockIndex->status |= BlockIndex::HAVE_DATA;
+
+		// If pindexNew is the genesis block or all parents are BlockIndex::STATUS_HAVE_DATA.
+		if (pBlockIndex->pPrev == NULL || pBlockIndex->pPrev->numChainTransactions) 
+		{
+			std::deque<BlockIndex*> queue;
+			queue.push_back(pBlockIndex);
+
+			while (!queue.empty()) 
+			{
+				BlockIndex *pCurrBlockIndex = queue.front();
+				queue.pop_front();
+
+				pCurrBlockIndex->numChainTransactions = (pCurrBlockIndex->pPrev ? pCurrBlockIndex->pPrev->numChainTransactions : 0) + pCurrBlockIndex->numBlockTransactions;
+				pCurrBlockIndex->sequenceID = BlockSequenceIDCounter_++;
+
+				// Add to candidate block, chainWork > tip
+				if (activeChain_->tip() == NULL || !blockIndexCandidates.value_comp()(pCurrBlockIndex, activeChain_->tip())) {
+					blockIndexCandidates.insert(pCurrBlockIndex);
+				}
+
+				// Find all other blocks that need to link to this block and add to the candidate
+				std::pair<std::multimap<BlockIndex*, BlockIndex*>::iterator, 
+					std::multimap<BlockIndex*, BlockIndex*>::iterator> range = mapUnlinkedBlocks.equal_range(pCurrBlockIndex);
+
+				while (range.first != range.second) 
+				{
+					std::multimap<BlockIndex*, BlockIndex*>::iterator it = range.first;
+					queue.push_back(it->second);
+					range.first++;
+					mapUnlinkedBlocks.erase(it);
+				}
+			}
+		}
+		else
+		{
+			if (pBlockIndex->pPrev && pBlockIndex->pPrev->isValid(BlockIndex::VALID_TREE)) 
+			{
+				mapUnlinkedBlocks.insert(std::make_pair(pBlockIndex->pPrev, pBlockIndex));
+			}
+		}
+
 		return true;
+	}
+
+	BlockIndex* ChainManager::findMostWorkChain()
+	{
+		do
+		{
+			BlockIndex* pBlockIndexNew = NULL;
+
+			// get the best candidate header.
+			// It is the largest block of chainWork
+			SetBlockIndexCandidates::reverse_iterator it = blockIndexCandidates.rbegin();
+			if (it == blockIndexCandidates.rend())
+				return NULL;
+
+			pBlockIndexNew = *it;
+
+			// Check whether all blocks on the path between the currently active chain and the candidate are valid.
+			// Just going until the active chain is an optimization, as we know all blocks in it are valid already.
+			BlockIndex *pBlockIndexTest = pBlockIndexNew;
+			bool invalidAncestor = false;
+
+
+			if (!invalidAncestor)
+				return pBlockIndexNew;
+
+		} while (true);
+
+		return NULL;
 	}
 
 	bool ChainManager::activateBestChain(BlockPtr pBlock)
 	{
+		std::lock_guard<std::recursive_mutex> lg(mutex_);
+
+		BlockIndex* pBlockIndexNewTip = NULL;
+		BlockIndex* pBlockIndexMostWork = NULL;
+
+		do
+		{
+			pBlockIndexMostWork = findMostWorkChain();
+
+			// Whether we have anything to do at all.
+			if (pBlockIndexMostWork == NULL || pBlockIndexMostWork == activeChain_->tip())
+				return true;
+
+
+		} while (pBlockIndexMostWork != activeChain_->tip());
+
 //		return activeChain_->addBlockToChain(pBlock);
 		return true;
 	}

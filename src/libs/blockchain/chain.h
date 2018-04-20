@@ -84,8 +84,10 @@ namespace P2pClouds {
 		BlockIndex* acceptBlock(BlockPtr pBlock);
 		BlockIndex* addToBlockIndex(BlockPtr pBlock);
 		bool activateBestChain(BlockPtr pBlock);
-		bool receiveBlock(BlockPtr pBlock);
+		bool receiveBlock(BlockPtr pBlock, BlockIndex* pBlockIndex);
+		bool validBlockHeader(BlockPtr pBlock);
 		bool validBlock(BlockPtr pBlock);
+		bool validTransaction(Transaction* pTransaction);
 
 		arith_uint256 caculateChainWork(BlockIndex* pBlockIndex);
 
@@ -153,6 +155,8 @@ namespace P2pClouds {
 			return iter->second;
 		}
 
+		BlockIndex* findMostWorkChain();
+
 	protected:
 		Blockchain* pBlockchain_;
 
@@ -160,13 +164,21 @@ namespace P2pClouds {
 		std::recursive_mutex mutex_;
 
 		// Block candidate, when a block height is greater than tipBlock, it is placed here as a candidate block when it is not linked to the chain.
-		std::set<BlockIndex*, BlockIndex::BlockIndexWorkComparator> blockIndexCandidates;
+		typedef std::set<BlockIndex*, BlockIndex::BlockIndexWorkComparator> SetBlockIndexCandidates;
+		SetBlockIndexCandidates blockIndexCandidates;
+
+		// All pairs A->B, where A (or one if its ancestors) misses transactions, but B has transactions.
+		std::multimap<BlockIndex*, BlockIndex*> mapUnlinkedBlocks;
 
 		// Including all known block indexes will only increase, not decrease
 		BlockMap mapBlockIndex_;
 
 		// Block mapping to NetNodeID
 		BlockNetNodeIDMap mapBlockNetNodeID_;
+
+		// Every received block is assigned a unique and increasing identifier, so we know which one to give priority in case of a fork.
+		// Blocks loaded from disk are assigned id 0, so start the counter at 1.
+		uint32_t BlockSequenceIDCounter_;
 	};
 
 	typedef std::shared_ptr<ChainManager> ChainManagerPtr;

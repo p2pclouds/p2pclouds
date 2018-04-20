@@ -8,10 +8,50 @@ namespace P2pClouds {
 	class BlockIndex : public std::enable_shared_from_this<BlockIndex>
 	{
 	public:
-		enum STATUS {
-			STATUS_NORMAL = 0,
-			STATUS_ERROR = 1,
-			STATUS_HAVE_DATA = 2,
+		enum STATUS 
+		{
+			// Unused.
+			VALID_UNKNOWN = 0,
+
+			// Parsed, version ok, hash satisfies claimed PoW, 1 <= vtx count <= max, timestamp not in future
+			VALID_HEADER = 1,
+
+			// All parent headers found, difficulty matches, timestamp >= median previous, 
+			// Implies all parents are also at least TREE.
+			VALID_TREE = 2,
+
+			/**
+			* Only first tx is coinbase, scripts valid, transactions valid, no duplicate txids,
+			* sigops, size, merkle root. Implies all parents are at least TREE but not necessarily TRANSACTIONS. When all
+			* parent blocks also have TRANSACTIONS, BlockIndex::numChainTransactions will be set.
+			*/
+			VALID_TRANSACTIONS = 3,
+
+			// Outputs do not overspend inputs, no double spends, coinbase output ok, no immature coinbase spends, BIP30.
+			// Implies all parents are also at least CHAIN.
+			VALID_CHAIN = 4,
+
+			// Scripts & signatures ok. Implies all parents are also at least SCRIPTS.
+			VALID_SCRIPTS = 5,
+
+			// All validity bits.
+			VALID_MASK = VALID_HEADER | VALID_TREE | VALID_TRANSACTIONS | VALID_CHAIN | VALID_SCRIPTS,
+
+			// full block available in blk*.dat
+			HAVE_DATA = 8,
+
+			// undo data available in rev*.dat
+			HAVE_UNDO = 16, 
+
+			HAVE_MASK = HAVE_DATA | HAVE_UNDO,
+
+			// stage after last reached validness failed
+			FAILED_VALID = 32, 
+
+			// descends from failed block
+			FAILED_CHILD = 64, 
+
+			FAILED_MASK = FAILED_VALID | FAILED_CHILD,
 		};
 
 	public:
@@ -51,16 +91,28 @@ namespace P2pClouds {
 
 		std::string toString();
 
-		bool valid() const
+		//! Check whether this block index entry is valid up to the passed validity level.
+		bool isValid(STATUS upToLevel/* = VALID_TRANSACTIONS*/) const
 		{
-			return (status & BlockIndex::STATUS_ERROR) == 0;
+			if ((status & BlockIndex::FAILED_MASK) > 0)
+				return false;
+
+			return (status & VALID_MASK) >= (uint32_t)upToLevel;
+		}
+
+		bool isValid() const
+		{
+			return (status & BlockIndex::FAILED_MASK) == 0;
 		}
 
 		int64_t getTimeval() const { return (int64_t)timeval; }
 
 	public:
 		uint32_t height;
+
+		// (memory only)
 		arith_uint256 chainWork;
+
 		uint32_t status;
 
 		// pointer to the hash of the block, if any. Memory is owned by this BlockIndex
@@ -78,6 +130,12 @@ namespace P2pClouds {
 
 		// (memory only) Sequential id assigned to distinguish order in which blocks are received.
 		uint32_t sequenceID;
+
+		// Number of transactions in this block.
+		uint32_t numBlockTransactions;
+
+		// (memory only) Number of transactions in the chain up to and including this block.
+		uint32_t numChainTransactions;
 	};
 
 	typedef std::shared_ptr<BlockIndex> BlockIndexPtr;

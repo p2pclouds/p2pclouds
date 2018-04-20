@@ -19,6 +19,9 @@ namespace P2pClouds {
 			pArgs->subsidyHalvingInterval = 210000;
 			pArgs->valueUnit = 100000000;
 			pArgs->hashBlockGenesis = uint256S("0");
+			pArgs->maxBlockSerializedSize = 4000000;
+			pArgs->maxBlockWeight = 4000000;
+			pArgs->maxBlockSigopsCost = pArgs->maxBlockWeight / 50;
 		}
 		else if (type == TEST)
 		{
@@ -29,6 +32,9 @@ namespace P2pClouds {
 			pArgs->subsidyHalvingInterval = 210000;
 			pArgs->valueUnit = 100000000;
 			pArgs->hashBlockGenesis = uint256S("0");
+			pArgs->maxBlockSerializedSize = 4000000;
+			pArgs->maxBlockWeight = 4000000;
+			pArgs->maxBlockSigopsCost = pArgs->maxBlockWeight / 50;
 		}
 
 		return pArgs;

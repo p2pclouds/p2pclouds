@@ -8,6 +8,22 @@ namespace P2pClouds {
     class ByteBuffer
     {
 	public:
+		static uint32_t typeSize(char a) { return 1; }
+		static uint32_t typeSize(int8_t a) { return 1; }
+		static uint32_t typeSize(uint8_t a) { return 1; }
+		static uint32_t typeSize(int16_t a) { return 2; }
+		static uint32_t typeSize(uint16_t a) { return 2; }
+		static uint32_t typeSize(int32_t a) { return 4; }
+		static uint32_t typeSize(uint32_t a) { return 4; }
+		static uint32_t typeSize(int64_t a) { return 8; }
+		static uint32_t typeSize(uint64_t a) { return 8; }
+		static uint32_t typeSize(uint160_t& a) { return uint160_t::WIDTH; }
+		static uint32_t typeSize(uint256_t& a) { return uint256_t::WIDTH; }
+		static uint32_t typeSize(float a) { return 4; }
+		static uint32_t typeSize(double a) { return 8; }
+		static uint32_t typeSize(const std::string& str) { return str.size(); }
+
+	public:
 		class Exception
 		{
 		public:
