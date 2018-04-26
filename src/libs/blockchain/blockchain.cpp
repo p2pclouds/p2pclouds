@@ -28,6 +28,11 @@ namespace P2pClouds {
 		return pConsensus_ ? pConsensus_->pArgs().get() : NULL;
 	}
 
+	bool Blockchain::isGenesisHash(uint256_t hash)
+	{
+		return (!pConsensusArgs()/* Usually only Null when creating a Genesis block */ || hash == pConsensusArgs()->hashBlockGenesis);
+	}
+
 	BlockIndex* Blockchain::processNewBlock(BlockPtr pBlock)
 	{
         std::lock_guard<std::recursive_mutex> lg(mutex_);

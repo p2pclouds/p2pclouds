@@ -107,8 +107,13 @@ namespace P2pClouds {
 
 		int64_t getTimeval() const { return (int64_t)timeval; }
 
+		// Efficiently find an ancestor of this block.
+		BlockIndex* getAncestor(int inputHeight);
+
+		void buildSkip();
+
 	public:
-		uint32_t height;
+		int height;
 
 		// (memory only)
 		arith_uint256 chainWork;
@@ -116,10 +121,13 @@ namespace P2pClouds {
 		uint32_t status;
 
 		// pointer to the hash of the block, if any. Memory is owned by this BlockIndex
-		const uint256* phashBlock;
+		const uint256_t* phashBlock;
 
 		// pointer to the index of the predecessor of this block
 		BlockIndex* pPrev;
+
+		// block Skiplist Pointer
+		BlockIndex* pSkip;
 
 		// block header
 		int32_t version;

@@ -13,13 +13,37 @@ namespace P2pClouds {
 
 	typedef std::vector<BlockIndex*> BlockChain;
 
+	class ChainSkipList
+	{
+	public:
+		int static inline invertLowestOne(int n) { return n & (n - 1); }
+
+		// Compute what height to jump back to with the BlockIndex::pSkip pointer.
+		int static inline getSkipHeight(int height)
+		{
+			if (height < 2)
+				return 0;
+
+			// Determine which height to jump back to. Any number strictly lower than height is acceptable,
+			// but the following expression seems to perform well in simulations (max 110 steps to go back
+			// up to 2**18 blocks).
+
+			// https://en.wikipedia.org/wiki/Skip_list
+			return (height & 1) ? invertLowestOne(invertLowestOne(height - 1)) + 1 : invertLowestOne(height);
+		}
+	};
+
 	class Chain : public std::enable_shared_from_this<Chain>
 	{
 	public:
 		Chain();
 		virtual ~Chain();
 
-		size_t height();
+		int height()
+		{
+			std::lock_guard<std::recursive_mutex> lg(mutex_);
+			return chain_.size() - 1;
+		}
 
 		bool validBlockTime(time_t timeval);
 
@@ -38,6 +62,51 @@ namespace P2pClouds {
 		BlockIndex* getBlock(size_t startBlockHeight, size_t blockOffsetHeight);
 
 		time_t getMedianBlockTimePastInChain(size_t range = 11);
+
+		friend bool operator==(const Chain &a, const Chain &b)
+		{
+			return a.chain_.size() == b.chain_.size() &&
+				a.chain_[a.chain_.size() - 1] == b.chain_[b.chain_.size() - 1];
+		}
+
+		BlockIndex* operator[] (int height)  
+		{
+			std::lock_guard<std::recursive_mutex> lg(mutex_);
+
+			if (height < 0 || height >= (int)chain_.size())
+				return NULL;
+
+			return chain_[height];
+		}
+
+		bool contains(const BlockIndex* pBlockIndex)  
+		{
+			std::lock_guard<std::recursive_mutex> lg(mutex_);
+			return (*this)[pBlockIndex->height] == pBlockIndex;
+		}
+
+		BlockIndex* next(const BlockIndex* pBlockIndex)  
+		{
+			if (contains(pBlockIndex))
+				return (*this)[pBlockIndex->height + 1];
+			else
+				return NULL;
+		}
+
+		BlockIndex* prev(const BlockIndex* pBlockIndex) 
+		{
+			if (contains(pBlockIndex))
+				return (*this)[pBlockIndex->height - 1];
+			else
+				return NULL;
+		}
+
+		BlockIndex* getGenesisBlockIndex() const {
+			return chain_.size() > 0 ? chain_[0] : NULL;
+		}
+
+		// Find the last common block between this chain and a block index entry.
+		BlockIndex* findFork(BlockIndex* pBlockIndex);
 
 	protected:
 		BlockChain chain_;
@@ -65,7 +134,7 @@ namespace P2pClouds {
 			return activeChain_;
 		}
 
-		size_t activeChainHeight() {
+		int activeChainHeight() {
 			return activeChain_->height();
 		}
 
@@ -84,10 +153,16 @@ namespace P2pClouds {
 		BlockIndex* acceptBlock(BlockPtr pBlock);
 		BlockIndex* addToBlockIndex(BlockPtr pBlock);
 		bool activateBestChain(BlockPtr pBlock);
+		bool activateBestChainStep(BlockIndex* pBlockIndexMostWork, BlockPtr pBlock);
 		bool receiveBlock(BlockPtr pBlock, BlockIndex* pBlockIndex);
 		bool validBlockHeader(BlockPtr pBlock);
 		bool validBlock(BlockPtr pBlock);
 		bool validTransaction(Transaction* pTransaction);
+		BlockIndex* findMostWorkBlockIndex();
+
+		bool connectTip(BlockIndex* pBlockIndexNew, BlockPtr pBlock);
+		bool disconnectTip();
+		void updateTip(BlockIndex* pBlockIndexNew);
 
 		arith_uint256 caculateChainWork(BlockIndex* pBlockIndex);
 
@@ -155,7 +230,11 @@ namespace P2pClouds {
 			return iter->second;
 		}
 
-		BlockIndex* findMostWorkChain();
+		// Delete all entries in setBlockIndexCandidates that are worse than the current tip.
+		void pruneBlockIndexCandidates();
+
+		// Check whether we are doing an initial block download (synchronizing from disk or network)
+		bool isInitialBlock();
 
 	protected:
 		Blockchain* pBlockchain_;
@@ -183,3 +262,5 @@ namespace P2pClouds {
 
 	typedef std::shared_ptr<ChainManager> ChainManagerPtr;
 }
+
+

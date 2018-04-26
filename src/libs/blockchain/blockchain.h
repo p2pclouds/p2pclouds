@@ -56,6 +56,8 @@ namespace P2pClouds {
 
 		ConsensusArgs* pConsensusArgs();
 
+		bool isGenesisHash(uint256_t hash);
+
 	protected:
 		ChainManagerPtr chainManager_;
 
