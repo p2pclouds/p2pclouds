@@ -23,6 +23,11 @@ namespace P2pClouds {
 		if (pBlockIndex->height > height())
 			pBlockIndex = pBlockIndex->getAncestor(height());
 
+		/*
+		                  * <--- fork pos
+						  |
+		   |1|2|3|4|5|6|7|8|8|9|10|10|
+		*/
 		while (pBlockIndex && !contains(pBlockIndex))
 			pBlockIndex = pBlockIndex->pPrev;
 
